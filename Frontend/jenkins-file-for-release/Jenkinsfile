@@ -1,0 +1,152 @@
+pipeline {
+    agent {
+        label 'unix'
+    }
+    environment {
+        // Define environment variables (can be loaded from Jenkins credentials)
+        EXPRESS = credentials('EXPRESS') // Fetch from Jenkins credentials
+        TCP = credentials('TCP')
+        CLOUDINARY_URL = credentials('CLOUDINARY_URL')
+   
+    }
+
+
+
+
+    stages {
+        // Stage 1: Checkout code from SCM (Git)
+
+        stage('Checkout') {
+            steps {
+                checkout scm // Checkout code from the configured SCM (e.g., Git)
+             
+            }
+            
+        }
+        stage('Dotenv Creation'){
+            steps{
+                script{
+                    sh """
+                        echo "EXPRESS=${env.EXPRESS}" > .env
+                        echo "TCP=${env.TCP}" >> .env
+                        echo "CLOUDINARY_URL=${env.CLOUDINARY_URL}" >> .env
+                    """
+                }
+            }
+        }
+        //  Build the application using Gradle
+        stage('Build') {
+            steps {
+                script {
+                        sh 'chmod -R 777 ${WORKSPACE}'
+                        sh 'chmod +x gradlew'
+                        sh './gradlew clean build' // Use 'sh' for Linux/macOS
+                
+                }
+            }
+        }
+        stage('Adding Runtime') {
+            steps {
+                script {
+                    
+                    sh 'chmod +x gradlew'
+                    sh './gradlew downloadJre' // Use 'sh' for Linux/macOS
+                   
+                }
+            }
+        }
+
+        // Stage 3: Create EXE file
+        stage('Create EXE') {
+            steps {
+                script {
+                    
+                    sh 'chmod +x gradlew'
+                    sh './gradlew createExe' // Use 'sh' for Linux/macOS
+                   
+                }
+            }
+        }
+
+        // Stage 4: Create ZIP file
+        stage('Create Zip') {
+            steps {
+                script {
+                        sh 'chmod +x gradlew'
+                        sh './gradlew zipLaunch4j' // Use 'sh' for Linux/macOS
+                
+                }
+            }
+        }
+
+    
+
+        
+
+        // Stage 5: Publish GitHub Release
+        stage('Publish GitHub Release') {
+            steps {
+                script {
+                    // Reuse the same ZIP file path 
+                    
+                    def zipFilePath = "${WORKSPACE}/build/distributions/forrealdatingapp.zip"
+                        
+
+                    // Log the file path being used
+                    echo "Attempting to upload file: ${zipFilePath}"
+
+
+                    // Create release notes file
+                    writeFile file: 'release-notes.md', text: "forrealdatingap executable - Built by Jenkins"
+                    // Create GitHub release
+                    createGitHubRelease(
+                        credentialId: 'GITHUB_TOKEN',
+                        repository: 'yehiamtheone/forrealdatingapp',
+                        tag: "official-app-exe",
+                        commitish: 'main',
+                        bodyFile: 'release-notes.md',
+                        draft: false
+                    )
+
+                    // Upload ZIP asset
+                    uploadGithubReleaseAsset(
+                        credentialId: 'GITHUB_TOKEN',
+                        repository: 'yehiamtheone/forrealdatingapp',
+                        tagName: "official-app-exe",
+                        uploadAssets: [
+                            [filePath: zipFilePath]
+                        ]
+                    )
+                }
+            }
+        }
+           stage('Clean Workspace') {
+            steps {
+                script {
+                        sh 'chmod +x gradlew'
+                        sh './gradlew clean' // Use 'sh' for Linux/macOS
+                
+                }
+            }
+        }
+
+    }
+
+    post {
+        success {
+            echo 'Pipeline succeeded! 🎉'
+            // Notify the team
+        }
+        failure {
+            echo 'Pipeline failed! 😢'
+            // Notify the team
+        }
+        cleanup {
+            script {
+                // This safely deletes the workspace
+                deleteDir()
+            }
+        }
+    }
+
+}
