@@ -16,9 +16,7 @@ COPY ./public ./public
 COPY ./middlewares ./middlewares
 COPY ./models ./models
 COPY ./routes ./routes
-COPY ./secret ./secret
 COPY ./app.js ./
-COPY ./SocketServer.js ./
 COPY ./NodemailerConfig.js ./
 
 
