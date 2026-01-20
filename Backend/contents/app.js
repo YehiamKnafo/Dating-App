@@ -3,7 +3,6 @@ const express = require('express');
 const cors = require('cors');
 const connectToDB = require('./db/mongoConnect.js');
 const Routes = require('./routes/config_routes.js');
-require("./SocketServer.js");
 
 // Initialize Express app
 const app = express();
