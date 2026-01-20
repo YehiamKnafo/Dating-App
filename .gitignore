@@ -1,3 +1,10 @@
 FrontOnlyEnvScript.bat
 .env
 /Backend/.env
+/Backend/contents/secret/
+build
+.vscode
+bin
+.env
+jre
+.gradle

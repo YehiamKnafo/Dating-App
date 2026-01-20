@@ -1,13 +1,12 @@
 const nodemailer = require('nodemailer');
-const { GMAIL_SMTP_EMAIL, GMAIL_SMTP_PASSWORD } = require('./secret/secretConf.js');
 // Configure transporter for sending emails
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 465,
   secure: true,
   auth: {
-    user: GMAIL_SMTP_EMAIL,
-    pass: GMAIL_SMTP_PASSWORD
+    user: process.env.GMAIL_SMTP_EMAIL,
+    pass: process.env.GMAIL_SMTP_PASSWORD
   }
 });
 

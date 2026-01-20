@@ -1,7 +1,6 @@
 const net = require("net");
 const { MatchModel } = require("./models/MatchModel");
 const { UserModel } = require ("./models/usersModel");
-const { SOCKET_PORT } = require('./secret/secretConf.js');
 const { Message } = require("./models/MessageModel.js");
 // Store connected clients with their userIds
 const clients = new Map();
@@ -185,5 +184,5 @@ server.on("error", (err) => {
     console.error("Server error:", err);
 });
 
-server.listen(SOCKET_PORT, () => console.log(`TCP server running on port ${SOCKET_PORT} `));
+server.listen(Number(process.env.SOCKET_PORT), () => console.log(`TCP server running on port ${process.env.SOCKET_PORT}`));
 module.exports = server;

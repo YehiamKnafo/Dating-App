@@ -1,6 +1,4 @@
 # Environment Variables Configuration and important notes
-
-## Branches
 - [`frontend`](https://github.com/yehiamtheone/forrealdatingapp/tree/Frontend): Contains JavaFX code  
 - [`backend`](https://github.com/yehiamtheone/forrealdatingapp/tree/Backend): Contains Node.js/API code  
 - `main`: Environment Variables Configuration and important notes

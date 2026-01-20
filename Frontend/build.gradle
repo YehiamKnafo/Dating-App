@@ -69,14 +69,14 @@ tasks.register('downloadJre') {
     }
 }
 launch4j {
-    outfile = 'forrealdatingapp.exe'
+    outfile = 'dating-app.exe'
     jarTask = project.tasks.jar
     bundledJrePath = 'jre' //
     outputDir = "${buildDir}/launch4j"
 }
 tasks.register('zipLaunch4j', Zip) {
     dependsOn 'createExe'
-    archiveFileName = "forrealdatingapp.zip" // Custom name with version
+    archiveFileName = "dating-app.zip" // Custom name with version
     destinationDirectory = file("${buildDir}/distributions")
 
     from(launch4jOutputDir) {
