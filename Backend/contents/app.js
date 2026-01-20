@@ -26,9 +26,8 @@ Routes(app);
 const server = http.createServer(app);
 
 // Start the server
-server.listen(Number(process.env.PORT), ()=>{
-  console.log(`express server up on port ${process.env.PORT}`);
-  
+server.listen(Number(process.env.EXPRESS_PORT || 3000), ()=>{
+  console.log(`express server up on port ${server.address().port}`);
 });
 
 // Handle unhandled promise rejections
