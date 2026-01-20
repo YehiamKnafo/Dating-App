@@ -2,7 +2,9 @@ const net = require("net");
 const { MatchModel } = require("./models/MatchModel");
 const { UserModel } = require ("./models/usersModel");
 const { Message } = require("./models/MessageModel.js");
+const connectToDB = require("./db/mongoConnect.js");
 // Store connected clients with their userIds
+connectToDB();
 const clients = new Map();
 const server = net.createServer((socket) => {
     let userId = null;
@@ -184,5 +186,5 @@ server.on("error", (err) => {
     console.error("Server error:", err);
 });
 
-server.listen(Number(process.env.SOCKET_PORT), () => console.log(`TCP server running on port ${process.env.SOCKET_PORT}`));
+server.listen(4000, () => console.log(`TCP server running on port 4000`));
 module.exports = server;

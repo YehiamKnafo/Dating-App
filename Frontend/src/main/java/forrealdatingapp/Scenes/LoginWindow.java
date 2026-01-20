@@ -174,7 +174,7 @@ private void login(String usrname, String p, Label error, Stage stage,String _id
         try {
             ChatZone.connectToServer();
             ChatZone.writer.println("userInteract|" + _id);
-            
+            System.out.println("am i here?");
  
 
         } catch (Exception e) {
