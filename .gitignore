@@ -2,7 +2,7 @@ FrontOnlyEnvScript.bat
 .env
 /Backend/.env
 /Backend/contents/secret/
-backendcontentfordevops
+backendcontentfordevops/
 build
 .vscode
 bin
