@@ -1,33 +1,17 @@
 # Real Dating App - Frontend
 
-A Java-based frontend application for a real-time dating platform with MongoDB backend and socket integration.
+A Java-based frontend application for a real-time dating platform with MongoDB backend and socketio integration.
 
 For the already deployed version check the [official App Release](https://github.com/yehiamtheone/forrealdatingapp/releases/download/official-app-exe/forrealdatingapp.zip)
+<!-- should go with static backend for this the spare one -->
+<!-- ## Prerequisites
 
-## Prerequisites
-
-- **Backend Setup Required**: Clone and set up the [backend branch](https://github.com/yehiamtheone/forrealdatingapp/tree/Backend) first
 
 - **Media Storage**: Cloudinary account (optional, for image uploads)
 
 ## Quick Start
 
-### Clone the Repository
 
-This project uses multiple branches. Clone the frontend branch specifically:
-
-```bash
-git clone -b Frontend https://github.com/yehiamtheone/forrealdatingapp.git frda-frontend
-```
-
-### Environment Configuration
-
-Copy the `env.example` file and configure your environment variables:
-- `Express`:Making requests to the backend api (e.g., `http://127.0.0.1:3000`)
-
-- `TCP`: Socket server host and port (e.g., `127.0.0.1:4000`)
-
-- `CLOUDINARY_URL`: Cloudinary API URL (if using cloud media storage)
 
 ## Development Setup
 
@@ -105,4 +89,4 @@ Copy the `env.example` file and configure your environment variables:
 I injected my own dotenv with my cloud and server into it, 
 you could easily use your own local server and cloud using 
 the setx command (for windows only).
-
+ -->

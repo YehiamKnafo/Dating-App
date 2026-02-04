@@ -1,46 +1,10 @@
 # Environment Variables Configuration and important notes
 - `frontend`: Contains JavaFX code  
 - `backend`: Contains Node.js/API code  
-- `main`: Environment Variables Configuration and important notes
+- `backend for credentials`: It purpose is to validate the user before giving credentials as i cant use something like cors cause frontend is offline client. 
+- `other`: Environment Variables Configuration and important notes
 
 This document outlines the environment variables required for different deployment scenarios and application components.
-
-## Docker Compose / Jenkins Credentials / System Variables
-
-For Docker Compose deployments or system-wide configuration:
-
-```bash
-EXPRESS=http://<ip>:<port>/
-TCP=<ip>:<port>
-CLOUDINARY_URL=cloudinary://<your_api_key>:<your_api_secret>@<your_cloud_name>
-JWT_SECRET=<any_string>
-MONGO_URL=mongodb://localhost:27017/<your_db_name> || mongodb+srv://<username>:<password>@cluster0.eyhd9.mongodb.net/<your_db_name>
-GMAIL_SMTP_EMAIL=<your_emaiPASSWORD=<your_api_password_from_google_account_settings>
-GITHUB_TOKEN=<your_git_hub_PAT_token>
-```
-
-## Backend Environment (.env)
-
-For backend-only configuration:
-
-```bash
-EXPRESS=http://<ip>:<port>/
-TCP=<ip>:<port>
-JWT_SECRET=<any_string>
-MONGO_URL=<mongodb://localhost:27017/ || mongodb+srv://<username>:<password>@cluster0.eyhd9.mongodb.net/>
-GMAIL_SMTP_EMAIL=<your_emaiPASSWORDWORD=<your_api_password_from_google_account_settings>
-```
-
-## Frontend Environment (.env)
-
-For frontend-only configuration:
-
-```bash
-EXPRESS=http://<ip>:<port>/
-TCP=<ip>:<port>
-CLOUDINARY_URL=cloudinary://<your_api_key>:<your_api_secret>@<your_cloud_name>
-
-```
 
 ## Environment Variables Reference
 
@@ -75,16 +39,24 @@ CLOUDINARY_URL=cloudinary://<your_api_key>:<your_api_secret>@<your_cloud_name>
 
 ### Technology Stack
 - **Frontend**: Java with Gradle build system
-- **Backend**: Express.js (Node.js)
+- **Backend**: Express.js (Node.js) and WebSocket.io
 - **Database**: MongoDB
-- **Real-time Communication**: Socket.io
+- **Real-time Communication**: WebSocket.io
 - **Media Storage**: Cloudinary (optional)
-- **Build Tool**: Gradle with Launch4j plugin
+- **Build Tool**: Gradle for frontend Npm for backend
+- **DevOps***: Cloud service is render and image on docker hub
+
+*render is free and was fitted for my first project.
+
 
 ### Port Configuration
 - **Backend API**: Port 3000
-- **Socket Server**: Port 4000
 - **Jenkins**: Port 8080
+
+*i would guess render serving with nginx so its just fyi*
+
+---
+
 
 ### Platform Support
 - **Windows**: Full support with standalone executable
@@ -95,14 +67,13 @@ CLOUDINARY_URL=cloudinary://<your_api_key>:<your_api_secret>@<your_cloud_name>
 - **Official App Limitation**: If running the official app without connection handling, manual environment configuration is required
 - **Cloudinary Integration**: Follow the existing Cloudinary API implementation; do not substitute with different APIs
 - **Database Instructions**: Refer to the backend branch for MongoDB setup and connection strings
-- **Cross-Platform**: While Gradle supports dynamic runtime for macOS/Linux, standalone app packaging is Windows-only
+- **Cross-Platform**: While Gradle supports dynamic runtime for macOS/Linux, standalone app packaging i choose for Windows-only for obvious purposes.
 
 ## Troubleshooting
 
 1. **Build Issues**: Ensure all environment variables are properly set
 2. **Connection Problems**: Verify backend server is running on the specified port
 3. **Database Errors**: Check MongoDB connection string in backend configuration
-4. **Jenkins Failures**: Confirm the correct branch is specified and Unix agent is available
 
 <!-- ## Contributing
 
@@ -117,21 +88,7 @@ CLOUDINARY_URL=cloudinary://<your_api_key>:<your_api_secret>@<your_cloud_name>
 For issues related to:
 - **Backend Setup**: Check the backend branch documentation
 - **Database Configuration**: Refer to MongoDB connection setup in backend
-- **Jenkins Pipeline**: Ensure correct branch and agent configuration
 
-## Setup Pipeline (`jenkins-file-for-setwin/Jenkinsfile`)
-
-**Purpose**: Environment setup and automatic release download for Windows
-
-**Features**:
-- Injects environment variables automatically
-- Downloads latest release to workspace
-- Windows-specific setup commands
-
-**Stages**:
-- **Checkout**: Verify Git repository access
-- **Add Environment Variables**: Configure Windows environment using `setx` commands
-- **Download Latest Release**: Fetch the latest executable from GitHub releases
 
 
 
