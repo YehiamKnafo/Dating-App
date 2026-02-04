@@ -9,11 +9,14 @@ import java.util.Queue;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import forrealdatingapp.App;
+import forrealdatingapp.TokenManager;
+import forrealdatingapp.WebSocket;
 import forrealdatingapp.chatScenes.ChatZone;
 import forrealdatingapp.dtos.User;
 import forrealdatingapp.routes.MatchingRequests;
 import forrealdatingapp.routes.UserProfileRequests;
 import forrealdatingapp.utilities.ImageUtils;
+import io.socket.client.Ack;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -30,6 +33,8 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class MainPage {
 private User user;
@@ -40,8 +45,10 @@ private static boolean UsersDetectad;
 private static User next;
 private static Queue<User> users;
     public void showMainPage(Stage stage, String _id) {
+        WebSocket.websocketio.INSTANCE.socketIoInstance.emit("RequestMatchStatus", _id);
         page = 1;
         user = UserProfileRequests.getMyProfile(_id);
+        socketUsernameAck();
         if (ChatZone.chatArea == null){
                 ChatZone.chatArea = new TextArea();
                 ChatZone.chatArea.setEditable(false);
@@ -208,7 +215,7 @@ private static Queue<User> users;
         HBox navBar = new HBox(30);
         Button profileButton = new Button(user.getUsername()+"\'s Profile");
         Button matchesButton = new Button("Matches");
-        Button preferrences = new Button("preferrences");
+        Button preferrences = new Button("preferrences & settings");
         
         styleOtherButtons(profileButton);
         styleOtherButtons(matchesButton);
@@ -232,8 +239,8 @@ private static Queue<User> users;
             }
         });
         preferrences.setOnAction((actionEvent) -> {
-            PrefrencesWindow pwwt = new PrefrencesWindow();
-            pwwt.showPrefrencesWindow(stage, _id);
+            PrefrencesWindow prefrencesWindow = new PrefrencesWindow();
+            prefrencesWindow.showPrefrencesWindow(stage, _id);
             
         });
         navBar.getChildren().addAll(profileButton, matchesButton,preferrences);
@@ -252,11 +259,14 @@ private static Queue<User> users;
             // if(ChatZone.messageCounters != null && !ChatZone.messageCounters.isEmpty()){
             //     UsersRouteRequests.UpdateCounter(_id);
             // }
+
+            WebSocket.websocketio.INSTANCE.socketIoInstance.disconnect();
+            TokenManager tm = new TokenManager();
+            tm.clearToken(_id);
             ChatZone.chatArea = null;
             ChatZone.isMessagesFetched.clear();
             LoginWindow loginWindow = new LoginWindow();
             loginWindow.showLoginWindow(stage,null);
-            ChatZone.closeConnection();
         });
         logout.getChildren().add(logOutButton);
 
@@ -275,10 +285,22 @@ private static Queue<User> users;
         stage.setWidth(900);
         stage.setTitle("Main Page");
         stage.show();
-        ChatZone.writer.println("Broadcast|" + _id);
+//        ChatZone.writer.println("Broadcast|" + _id);
 
     }
-    
+
+    private void socketUsernameAck() {
+        if (user != null)
+            WebSocket.websocketio.INSTANCE.socketIoInstance.emit("usernameAck",user.getUsername(), (Ack) args->{
+                JSONObject data = (JSONObject) args[0];
+                try {
+                    System.out.println(data.getString("status"));
+                } catch (JSONException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+    }
+
 
     private void DisplayUser(Text name, Text age, Text bio, Queue<User> users, ImageView imageView) {
         if (users != null){

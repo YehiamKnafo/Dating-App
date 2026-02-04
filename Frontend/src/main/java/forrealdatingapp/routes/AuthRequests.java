@@ -1,14 +1,9 @@
 package forrealdatingapp.routes;
 
+import okhttp3.*;
+
 import java.io.IOException;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,135 +13,181 @@ public class AuthRequests {
 
     public static boolean postSignup(String json) {
         try {
-            // Create an HttpClient
-            HttpClient client = HttpClient.newHttpClient();
-            // Build the HttpRequest
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(getHost() + "auth"))
-                    .POST(HttpRequest.BodyPublishers.ofString(json)) // Send JSON as body
-                    .header("Content-Type", "application/json") // Set header
+            OkHttpClient client = new OkHttpClient.Builder()
+                    .connectTimeout(java.time.Duration.ofSeconds(10))
+                    .readTimeout(java.time.Duration.ofSeconds(10))
+                    .writeTimeout(java.time.Duration.ofSeconds(10))
                     .build();
 
-            // Send the request and get the response
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            RequestBody body = RequestBody.create(
+                    json,
+                    MediaType.parse("application/json; charset=utf-8")
+            );
 
-            // Print the status code and response body
-            System.out.println("Status Code: " + response.statusCode());
-            System.out.println("Response Body: " + response.body());
-            return response.statusCode() == 201;
+            Request request = new Request.Builder()
+                    .url(getHost() + "auth")
+                    .post(body)
+                    .build();
 
-        } catch (IOException | InterruptedException e) {
+            try (Response response = client.newCall(request).execute()) {
+                System.out.println("Status Code: " + response.code());
+                System.out.println("Response Body: " + response.body().string());
+                return response.code() == 201;
+            }
+
+        } catch (IOException e) {
             System.out.println(e.getLocalizedMessage());
         }
         return false;
 
     }
-public static String PostLogin(String json) {
-      
+
+
+    public static String PostLogin(String json) {
         try {
-            HttpClient client = HttpClient.newHttpClient();
+            System.out.println("DEBUG: Using OkHttp for login request");
 
-            // System.out.println(jsonPath.toAbsolutePath());
-            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(getHost() + "auth/login"))
-            .header("Content-Type", "application/json")
-            .POST(HttpRequest.BodyPublishers.ofString(json)).build();
-            HttpResponse<String> response = client.send(req, HttpResponse.BodyHandlers.ofString());
-            // System.out.println("response code: " + response.statusCode());
-            // System.out.println("response Body: " + response.body());
-            return response.body();
+            OkHttpClient client = new OkHttpClient.Builder()
+                    .connectTimeout(java.time.Duration.ofSeconds(10))
+                    .readTimeout(java.time.Duration.ofSeconds(10))
+                    .writeTimeout(java.time.Duration.ofSeconds(10))
+                    .build();
 
-        } catch (IOException | InterruptedException e) {
-            return e.getLocalizedMessage();
+            RequestBody body = RequestBody.create(
+                    json,
+                    MediaType.parse("application/json; charset=utf-8")
+            );
+
+            Request request = new Request.Builder()
+                    .url("http://localhost:4000/login")
+                    .post(body)
+                    .build();
+
+//            System.out.println("DEBUG: Sending request to: " + getHost() + "auth/login");
+
+            try (Response response = client.newCall(request).execute()) {  // ← FIXED HERE
+                System.out.println("Response code: " + response.code());
+
+                if (response.body() != null) {
+                    String responseBody = response.body().string();
+//                    System.out.println("Response body: " + responseBody);
+                    return responseBody;
+                } else {
+                    System.err.println("Response body is null");
+                    return null;
+                }
+            }
+
+        } catch (IOException e) {
+            System.err.println("Login request failed:");
+            e.printStackTrace();
+            return null;
+        } catch (Exception e) {
+            System.err.println("Unexpected error:");
+            e.printStackTrace();
+            return null;
         }
-
     }
     public static boolean verifyOtpRequest(String email, String otp) {
         try {
-            URI uri = new URI(getHost() + "auth/verify-otp");
-            URL url = uri.toURL();
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/json");
-            connection.setDoOutput(true);
+            OkHttpClient client = new OkHttpClient.Builder()
+                    .connectTimeout(java.time.Duration.ofSeconds(10))
+                    .readTimeout(java.time.Duration.ofSeconds(10))
+                    .writeTimeout(java.time.Duration.ofSeconds(10))
+                    .build();
 
             String jsonInputString = "{\"email\": \"" + email + "\", \"otp\": \"" + otp + "\"}";
 
-            try (OutputStream os = connection.getOutputStream()) {
-                byte[] input = jsonInputString.getBytes("utf-8");
-                os.write(input, 0, input.length);
+            RequestBody body = RequestBody.create(
+                    jsonInputString,
+                    MediaType.parse("application/json; charset=utf-8")
+            );
+
+            Request request = new Request.Builder()
+                    .url(getHost() + "auth/verify-otp")
+                    .post(body)
+                    .build();
+
+            try (Response response = client.newCall(request).execute()) {
+                int code = response.code();
+                if (code == 200) {
+                    System.out.println("OTP verified successfully");
+                    return true;
+                } else {
+                    System.out.println("Invalid OTP");
+                    return false;
+                }
             }
 
-            int code = connection.getResponseCode();
-            if (code == 200) {
-                System.out.println("OTP verified successfully");
-                // Move to next part of your flow (e.g., user dashboard or profile creation)
-                return true;
-            } else {
-                System.out.println("Invalid OTP");
-                return false;
-            }
-
-        } catch (IOException | URISyntaxException e) {
-
+        } catch (IOException e) {
             return false;
         }
     }
 
     public static String sendOtpRequest(String email,String type) {
         try {
-            // Initialize ObjectMapper
-            
-            // Create the HTTP client
-            HttpClient client = HttpClient.newHttpClient();
+            OkHttpClient client = new OkHttpClient.Builder()
+                    .connectTimeout(java.time.Duration.ofSeconds(10))
+                    .readTimeout(java.time.Duration.ofSeconds(10))
+                    .writeTimeout(java.time.Duration.ofSeconds(10))
+                    .build();
 
             // Define the request body
             Map<String, String> emailmap = new HashMap<>(Map.of("email", email,"type",type));
             String requestBody = manageJSON().writeValueAsString(emailmap);
-            System.out.println(requestBody);
 
-            // Create the POST request
-            HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create(getHost() + "auth/send-otp"))
-            .header("Content-Type", "application/json") // Set headers
-            .POST(HttpRequest.BodyPublishers.ofString(requestBody)) // Set the request body
-            .build();
+            RequestBody body = RequestBody.create(
+                    requestBody,
+                    MediaType.parse("application/json; charset=utf-8")
+            );
 
-            // Send the request and get the response
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            Request request = new Request.Builder()
+                    .url(getHost() + "auth/send-otp")
+                    .post(body)
+                    .build();
 
-            // Return the response
-            return response.body();
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace(); // Better debugging
-            return "error"; // Return a non-null value
+            try (Response response = client.newCall(request).execute()) {
+                return response.body().string();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "error";
         }
     }
     public static String Resetusrpass(String passwordString, String email) {
-    try {
-        Map<String, Object>  jsonMap = new HashMap<>(Map.of("email", email,"password",passwordString));
-        String json = manageJSON().writeValueAsString(jsonMap);
-        HttpClient client = HttpClient.newHttpClient();
-        HttpRequest req = HttpRequest.newBuilder()
-        .uri(URI.create(getHost() + "auth/resetpassword" ))
-        .header("Content-Type", "application/json")
-        .PUT(HttpRequest.BodyPublishers.ofString(json))
-        .build(); //PUT request
-        HttpResponse<String> response = client.send(req, HttpResponse.BodyHandlers.ofString());
-        System.out.println("Response code: " + response.statusCode());
-        System.out.println("Response body: " + response.body());
-        if(response.statusCode() == 201) return "201|password reset successfuly";
-        if (response.statusCode() == 404) return "404|user not exist in the database";
-        if (response.statusCode() == 403) return "403|you tried to change to the same password";
-        return null;
-        
+        try {
+            Map<String, Object> jsonMap = new HashMap<>(Map.of("email", email,"password",passwordString));
+            String json = manageJSON().writeValueAsString(jsonMap);
 
+            OkHttpClient client = new OkHttpClient.Builder()
+                    .connectTimeout(java.time.Duration.ofSeconds(10))
+                    .readTimeout(java.time.Duration.ofSeconds(10))
+                    .writeTimeout(java.time.Duration.ofSeconds(10))
+                    .build();
 
-        } catch (IOException | InterruptedException e) {
+            RequestBody body = RequestBody.create(
+                    json,
+                    MediaType.parse("application/json; charset=utf-8")
+            );
+
+            Request request = new Request.Builder()
+                    .url(getHost() + "auth/resetpassword")
+                    .put(body)
+                    .build();
+
+            try (Response response = client.newCall(request).execute()) {
+                System.out.println("Response code: " + response.code());
+                System.out.println("Response body: " + response.body().string());
+                if(response.code() == 201) return "201|password reset successfuly";
+                if (response.code() == 404) return "404|user not exist in the database";
+                if (response.code() == 403) return "403|you tried to change to the same password";
+                return null;
+            }
+
+        } catch (IOException e) {
             System.out.println(e.getLocalizedMessage());
             return null;
         }
-
-    
-}
+    }
     
 }

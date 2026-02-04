@@ -5,6 +5,7 @@ import java.io.IOException;
 import forrealdatingapp.Scenes.LoginWindow;
 import forrealdatingapp.Scenes.MatchesPage;
 import forrealdatingapp.chatScenes.ChatZone;
+import forrealdatingapp.credentials.Credentials;
 import io.github.cdimascio.dotenv.Dotenv;
 import io.github.cdimascio.dotenv.DotenvException;
 import javafx.application.Application;
@@ -17,13 +18,26 @@ public class App extends Application{
     
     public static LoginWindow loginWindow = new LoginWindow();
     public static MatchesPage matchesPage = new MatchesPage();
-    
     String token_id;
     public static boolean isTokenOnline = false;
     @Override
     public void start(Stage primaryStage) throws IOException{
-       
+
         loginWindow.showLoginWindow(primaryStage, token_id);
+        WebSocket.websocketio.INSTANCE.connectToServer();
+
+        primaryStage.setOnCloseRequest(event->{
+            System.out.println("Window closing, disconnecting socket...");
+            TokenManager tokenManager = new TokenManager();
+            if (token_id != null && !isTokenOnline){
+                tokenManager.clearToken(token_id);  // Clear the token when the app stops
+
+            }
+            Platform.exit();  // Exit the JavaFX application
+
+            if (WebSocket.websocketio.INSTANCE.socketIoInstance != null)
+                WebSocket.websocketio.INSTANCE.socketIoInstance.disconnect();
+        });
 
     }
     @Override
@@ -39,7 +53,8 @@ public class App extends Application{
             tokenManager.clearToken(token_id);  // Clear the token when the app stops
 
         }
-        ChatZone.closeConnection();
+//        ChatZone.closeConnection();
+        WebSocket.websocketio.INSTANCE.socketIoInstance.disconnect();
         Platform.exit();  // Exit the JavaFX application
     }
     public static <T extends Pane> void BackToLoginBtn(T div, Stage stage){

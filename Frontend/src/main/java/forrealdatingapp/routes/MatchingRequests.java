@@ -1,15 +1,9 @@
 package forrealdatingapp.routes;
 
-import static forrealdatingapp.routes.RouterUtils.getHost;
-import static forrealdatingapp.routes.RouterUtils.manageJSON;
-import static forrealdatingapp.routes.RouterUtils.manageToken;
+import okhttp3.*;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URLEncoder;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
@@ -20,158 +14,176 @@ import com.fasterxml.jackson.core.type.TypeReference;
 
 import forrealdatingapp.dtos.User;
 
+import static forrealdatingapp.routes.RouterUtils.getHost;
+import static forrealdatingapp.routes.RouterUtils.manageJSON;
+import static forrealdatingapp.routes.RouterUtils.manageToken;
+
 public class MatchingRequests {
     public static Queue<User> getUsers() {
-        // Create a HttpClient
-        HttpClient client = HttpClient.newHttpClient();
-
-        // Create a HttpRequest (GET request)
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(getHost() + "matches"))
-                .header("x-api-key", "example")
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(java.time.Duration.ofSeconds(10))
+                .readTimeout(java.time.Duration.ofSeconds(10))
+                .writeTimeout(java.time.Duration.ofSeconds(10))
                 .build();
 
-        try {
-            // Send the GET request and receive the response
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        Request request = new Request.Builder()
+                .url(getHost() + "matches")
+                .addHeader("x-api-key", "example")
+                .build();
 
-            //response status code and body
-            // System.out.println(response.body());
-            Queue<User> users = manageJSON().readValue(response.body(), new TypeReference<Queue<User>>() {
+        try (Response response = client.newCall(request).execute()) {
+            Queue<User> users = manageJSON().readValue(response.body().string(), new TypeReference<Queue<User>>() {
             });
             System.out.println(users);
             return users;
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
             return null;
         }
-
     }
 
     public static Queue<User> getUsers(String _id,String page) {
-    // Start building the query string
-    StringBuilder queryParams = new StringBuilder("?");
-    
-    if (page != null) queryParams.append("page=").append(URLEncoder.encode(page, StandardCharsets.UTF_8));
-    
+        // Create the query string
+        String queryString = (page != null) ? "?page=" + URLEncoder.encode(page, StandardCharsets.UTF_8) : "";
+        String url = getHost() + "matches/querygetmatches" + queryString;
 
-    // Remove trailing "&" if exists
-    if (queryParams.length() < 1) {
-        queryParams.setLength(0); // No params provided, avoid sending "?"
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(java.time.Duration.ofSeconds(10))
+                .readTimeout(java.time.Duration.ofSeconds(10))
+                .writeTimeout(java.time.Duration.ofSeconds(10))
+                .build();
+
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("x-api-key", manageToken().getToken(_id))
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            String responseBody = response.body().string();
+            // Debugging output
+            System.out.println(responseBody);
+
+            // Parse JSON response into Queue<User>
+            return manageJSON().readValue(responseBody, new TypeReference<Queue<User>>() {});
+        } catch (IOException e) {
+            return null;
+        }
     }
-    System.out.println(queryParams);
-    // Create the full URL
-    String url = getHost() + "matches/querygetmatches" + queryParams;
-
-    // Create HttpClient
-    HttpClient client = HttpClient.newHttpClient();
-
-    // Create HttpRequest (GET request)
-    HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create(url))
-            .header("x-api-key", manageToken().getToken(_id))
-            .build();
-
-    try {
-        // Send the GET request and receive the response
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-        // Debugging output
-        System.out.println(response.body());
-
-        // Parse JSON response into Queue<User>
-        return manageJSON().readValue(response.body(), new TypeReference<Queue<User>>() {});
-    } catch (IOException | InterruptedException e) {
-        return null;
-    }
-}
 public static void Dislike(String json, String _id) {
-     
         try {
-        HttpClient client = HttpClient.newHttpClient();
-        // System.out.println(jsonPath.toAbsolutePath());
-        HttpRequest req = HttpRequest.newBuilder()
-        .uri(URI.create(getHost() + "matches/dislike"))
-        .header("Content-Type", "application/json")
-        .header("x-api-key",manageToken().getToken(_id))
-        .POST(HttpRequest.BodyPublishers.ofString(json))
-        .build();
-        HttpResponse<String> response = client.send(req, HttpResponse.BodyHandlers.ofString());
-        System.out.println("response code: "+ response.statusCode());
-        System.out.println("response Body: " + response.body());
-    } catch (IOException | InterruptedException e) {
-        System.out.println(e.getLocalizedMessage());
-    }
+            OkHttpClient client = new OkHttpClient.Builder()
+                    .connectTimeout(java.time.Duration.ofSeconds(10))
+                    .readTimeout(java.time.Duration.ofSeconds(10))
+                    .writeTimeout(java.time.Duration.ofSeconds(10))
+                    .build();
 
-    }
+            RequestBody body = RequestBody.create(
+                    json,
+                    MediaType.parse("application/json; charset=utf-8")
+            );
 
+            Request request = new Request.Builder()
+                    .url(getHost() + "matches/dislike")
+                    .addHeader("x-api-key", manageToken().getToken(_id))
+                    .post(body)
+                    .build();
+
+            try (Response response = client.newCall(request).execute()) {
+                System.out.println("response code: " + response.code());
+                System.out.println("response Body: " + response.body().string());
+            }
+        } catch (IOException e) {
+            System.out.println(e.getLocalizedMessage());
+        }
+    }
     public static Map<String, Boolean> CheckMatch(String json,String _id) {
         try {
-            HttpClient client = HttpClient.newHttpClient();
-            // System.out.println(jsonPath.toAbsolutePath());
-            HttpRequest req = HttpRequest.newBuilder()
-            .uri(URI.create(getHost() + "matches/checkmatch"))
-            .header("Content-Type", "application/json")
-            .header("x-api-key",manageToken().getToken(_id))
-            .POST(HttpRequest.BodyPublishers.ofString(json))
-            .build();
-            HttpResponse<String> response = client.send(req, HttpResponse.BodyHandlers.ofString());
-            System.out.println("response code: "+ response.statusCode());
-            System.out.println("response Body: " + response.body());
-            return manageJSON().readValue(response.body(), new TypeReference<Map<String, Boolean>>() {});
-        } catch (IOException | InterruptedException e) {
+            OkHttpClient client = new OkHttpClient.Builder()
+                    .connectTimeout(java.time.Duration.ofSeconds(10))
+                    .readTimeout(java.time.Duration.ofSeconds(10))
+                    .writeTimeout(java.time.Duration.ofSeconds(10))
+                    .build();
+
+            RequestBody body = RequestBody.create(
+                    json,
+                    MediaType.parse("application/json; charset=utf-8")
+            );
+
+            Request request = new Request.Builder()
+                    .url(getHost() + "matches/checkmatch")
+                    .addHeader("x-api-key", manageToken().getToken(_id))
+                    .post(body)
+                    .build();
+
+            try (Response response = client.newCall(request).execute()) {
+                System.out.println("response code: " + response.code());
+                String responseBody = response.body().string();
+                System.out.println("response Body: " + responseBody);
+                return manageJSON().readValue(responseBody, new TypeReference<Map<String, Boolean>>() {});
+            }
+        } catch (IOException e) {
             return null;
         }
     }
 
     public static void like(String json,String _id) {
         try {
-            HttpClient client = HttpClient.newHttpClient();
-            // System.out.println(jsonPath.toAbsolutePath());
-            HttpRequest req = HttpRequest.newBuilder()
-            .uri(URI.create(getHost() + "matches/like"))
-            .header("Content-Type", "application/json")
-            .header("x-api-key",manageToken().getToken(_id))
-            .POST(HttpRequest.BodyPublishers.ofString(json))
-            .build();
-            HttpResponse<String> response = client.send(req, HttpResponse.BodyHandlers.ofString());
-            System.out.println("response code: "+ response.statusCode());
-            System.out.println("response Body: " + response.body());
-        } catch (IOException | InterruptedException e) {
+            OkHttpClient client = new OkHttpClient.Builder()
+                    .connectTimeout(java.time.Duration.ofSeconds(10))
+                    .readTimeout(java.time.Duration.ofSeconds(10))
+                    .writeTimeout(java.time.Duration.ofSeconds(10))
+                    .build();
+
+            RequestBody body = RequestBody.create(
+                    json,
+                    MediaType.parse("application/json; charset=utf-8")
+            );
+
+            Request request = new Request.Builder()
+                    .url(getHost() + "matches/like")
+                    .addHeader("x-api-key", manageToken().getToken(_id))
+                    .post(body)
+                    .build();
+
+            try (Response response = client.newCall(request).execute()) {
+                System.out.println("response code: " + response.code());
+                System.out.println("response Body: " + response.body().string());
+            }
+        } catch (IOException e) {
             System.out.println(e.getLocalizedMessage());
         }
     }
 
     public static List<User> getMatches(String page, String _id) {
         StringBuilder queryParams = new StringBuilder("?");
-    
+
         if (page != null) queryParams.append("page=").append(URLEncoder.encode(page, StandardCharsets.UTF_8)).append("&");
-    
+
         // Remove trailing "&" if exists
         if (queryParams.length() > 1) {
             queryParams.setLength(queryParams.length() - 1);
         } else {
             queryParams.setLength(0); // No params provided, avoid sending "?"
         }
-    
+
         try {
-                    // Create HttpClient
-                    HttpClient client = HttpClient.newHttpClient();
-                    // Build the GET request
-                    HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(getHost() + "matches/getmatches" + queryParams))
-                    .header("x-api-key", manageToken().getToken(_id)) // Target URL
-                    .GET() // GET method
+            OkHttpClient client = new OkHttpClient.Builder()
+                    .connectTimeout(java.time.Duration.ofSeconds(10))
+                    .readTimeout(java.time.Duration.ofSeconds(10))
+                    .writeTimeout(java.time.Duration.ofSeconds(10))
                     .build();
-                    // Send the request and handle the response
-                    HttpResponse<String> response = client.send(req, HttpResponse.BodyHandlers.ofString());
-                    // Print response details
-                    // System.out.println("Response code: " + response.statusCode());
-                    // System.out.println("Response body: " + response.body());
-                    return manageJSON().readValue(response.body(), new TypeReference<List<User>>(){});
-                    } catch (IOException | InterruptedException e) {
-                        System.out.println(e.getLocalizedMessage());
-                        return null;
-                    }
+
+            Request request = new Request.Builder()
+                    .url(getHost() + "matches/getmatches" + queryParams)
+                    .addHeader("x-api-key", manageToken().getToken(_id))
+                    .build();
+
+            try (Response response = client.newCall(request).execute()) {
+                return manageJSON().readValue(response.body().string(), new TypeReference<List<User>>(){});
+            }
+        } catch (IOException e) {
+            System.out.println(e.getLocalizedMessage());
+            return null;
+        }
     }
 
   
@@ -179,47 +191,70 @@ public static void Dislike(String json, String _id) {
     public static boolean Unmatch(String _id, String _matchId) {
         Map<String, String> reqBodyMap = new HashMap<>(Map.of("_matchId", _matchId));
         try {
-                String reqBody = manageJSON().writeValueAsString(reqBodyMap);
-                HttpClient client = HttpClient.newHttpClient();
-                // System.out.println(jsonPath.toAbsolutePath());
-                HttpRequest req = HttpRequest.newBuilder().uri(URI.create(getHost() + "matches/unmatch"))
-                .header("Content-Type", "application/json")
-                .header("x-api-key",manageToken().getToken(_id))
-                .POST(HttpRequest.BodyPublishers.ofString(reqBody)).build();
-                HttpResponse<String> response = client.send(req, HttpResponse.BodyHandlers.ofString());
-                System.out.println("response code: "+ response.statusCode());
-                System.out.println("response Body: " + response.body());
-                Map<String, Object> resbody = manageJSON().readValue(response.body(), new TypeReference<Map<String, Object>>(){});
+            String reqBody = manageJSON().writeValueAsString(reqBodyMap);
+
+            OkHttpClient client = new OkHttpClient.Builder()
+                    .connectTimeout(java.time.Duration.ofSeconds(10))
+                    .readTimeout(java.time.Duration.ofSeconds(10))
+                    .writeTimeout(java.time.Duration.ofSeconds(10))
+                    .build();
+
+            RequestBody body = RequestBody.create(
+                    reqBody,
+                    MediaType.parse("application/json; charset=utf-8")
+            );
+
+            Request request = new Request.Builder()
+                    .url(getHost() + "matches/unmatch")
+                    .addHeader("x-api-key", manageToken().getToken(_id))
+                    .post(body)
+                    .build();
+
+            try (Response response = client.newCall(request).execute()) {
+                System.out.println("response code: " + response.code());
+                String responseBody = response.body().string();
+                System.out.println("response Body: " + responseBody);
+                Map<String, Object> resbody = manageJSON().readValue(responseBody, new TypeReference<Map<String, Object>>(){});
                 if (resbody.containsKey("approved"))
-                    return (boolean)resbody.get("approved");    
-                return false;    
-            } catch (IOException | InterruptedException e) {
-                    System.out.println(e.getLocalizedMessage());
-                    return false;
-                }
+                    return (boolean)resbody.get("approved");
+                return false;
+            }
+        } catch (IOException e) {
+            System.out.println(e.getLocalizedMessage());
+            return false;
+        }
     }
 public static User getMatchedProfile(String _id, Map<String, Object> jsonMap){
         try {
-                    String json = manageJSON().writeValueAsString(jsonMap);
-                    HttpClient client = HttpClient.newHttpClient();
-                    // System.out.println(jsonPath.toAbsolutePath());
-                    HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(getHost() + "matches/getMatchedProfile"))
-                    .header("Content-Type", "application/json")
-                    .header("x-api-key", manageToken().getToken(_id))
-                    .POST(HttpRequest.BodyPublishers.ofString(json))
-                    .build();
-                    HttpResponse<String> response = client.send(req, HttpResponse.BodyHandlers.ofString());
-                    System.out.println("response code: "+ response.statusCode());
-                    System.out.println("response Body: " + response.body());
-                    return manageJSON().readValue(response.body(), User.class);
-                } catch (IOException | InterruptedException e) {
-                    System.out.println(e.getLocalizedMessage());
-                    return null;
-                }
-        
-        
-    }
+            String json = manageJSON().writeValueAsString(jsonMap);
 
+            OkHttpClient client = new OkHttpClient.Builder()
+                    .connectTimeout(java.time.Duration.ofSeconds(10))
+                    .readTimeout(java.time.Duration.ofSeconds(10))
+                    .writeTimeout(java.time.Duration.ofSeconds(10))
+                    .build();
+
+            RequestBody body = RequestBody.create(
+                    json,
+                    MediaType.parse("application/json; charset=utf-8")
+            );
+
+            Request request = new Request.Builder()
+                    .url(getHost() + "matches/getMatchedProfile")
+                    .addHeader("x-api-key", manageToken().getToken(_id))
+                    .post(body)
+                    .build();
+
+            try (Response response = client.newCall(request).execute()) {
+                System.out.println("response code: " + response.code());
+                String responseBody = response.body().string();
+                System.out.println("response Body: " + responseBody);
+                return manageJSON().readValue(responseBody, User.class);
+            }
+        } catch (IOException e) {
+            System.out.println(e.getLocalizedMessage());
+            return null;
+        }
     
-}
+}}
+

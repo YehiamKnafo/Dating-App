@@ -337,7 +337,7 @@ public class ProfilePage {
         return field;
     }
 
-    public Button createStyledButton(String text, String icon) {
+    public static Button createStyledButton(String text, String icon) {
         Button button = new Button(text);
         if (icon.equals("delete")) {
               button.setStyle(String.format("""

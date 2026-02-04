@@ -9,11 +9,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import forrealdatingapp.App;
 import forrealdatingapp.TokenManager;
+import forrealdatingapp.WebSocket;
 import forrealdatingapp.chatScenes.ChatZone;
 import forrealdatingapp.dtos.LoginClass;
 import forrealdatingapp.otps.SendOTPReset;
 import forrealdatingapp.otps.SendOTPScreen;
 import forrealdatingapp.routes.AuthRequests;
+import forrealdatingapp.routes.CredentialsRequests;
+import io.socket.client.Ack;
 import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -26,6 +29,8 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class LoginWindow {
     static ObjectMapper om = new ObjectMapper();
@@ -139,60 +144,111 @@ public class LoginWindow {
         passStage = stage;
         
     }
-private void login(String usrname, String p, Label error, Stage stage,String _id){
-    String username = usrname;
-    String password = p;
-    System.out.println("Login clicked: " + username + " / " + password);
-    LoginClass usrpass = new LoginClass(username, password);
-    String json = "";
-    try {
-        json = om.writeValueAsString(usrpass);
-    } catch (JsonProcessingException e1) {
-        // TODO Auto-generated catch block
-        System.out.println(e1.getLocalizedMessage());
-        
-    }
-    // System.out.println(json);
-    String res = AuthRequests.PostLogin(json);
-    // System.out.println(res == null);
-    String token = "";
-    
-    try {
-        Map<String, Object> jsonUser = om.readValue(res, new TypeReference<Map<String,Object>>(){});
-        token = (String) jsonUser.get("token");
-        _id = (String) jsonUser.get("_id");
-        
-    } catch (JsonProcessingException exception) {
-        System.out.println(exception.getLocalizedMessage());
-    }
-    if(token != null && !token.isEmpty()){
-        // System.out.println("dailyFeedScreen");
-        //token logic -- create token class
-        // res var contains token now
-        passID = _id;
-        manageToken().saveToken(_id, token);
-        try {
-            ChatZone.connectToServer();
-            ChatZone.writer.println("userInteract|" + _id);
-            System.out.println("am i here?");
- 
 
-        } catch (Exception e) {
-            System.out.println(e.getCause());
+    private void login(String usrname, String p, Label error, Stage stage, String _id) {
+        if (!WebSocket.websocketio.INSTANCE.socketIoInstance.connected()) {
+            WebSocket.websocketio.INSTANCE.socketIoInstance.connect(); // This turns the engine back on
         }
-      
-    } 
-    else{
-        error.setTextFill(Color.RED);
-        error.setText("invalid user or password");
+        String username = usrname;
+        String password = p;
+//        System.out.println("Login clicked: " + username + " / " + password);
+
+        LoginClass usrpass = new LoginClass(username, password);
+        String json = "";
+        try {
+            json = om.writeValueAsString(usrpass);
+//            System.out.println("JSON to send: " + json);
+        } catch (JsonProcessingException e1) {
+            System.out.println("JSON serialization error: " + e1.getLocalizedMessage());
+            e1.printStackTrace();
+        }
+
+        System.out.println("DEBUG: BEFORE PostLogin call"); // NEW
+        String res = null;
+
+        try {
+            res = AuthRequests.PostLogin(json);
+//            System.out.println("DEBUG: AFTER PostLogin call"); // NEW
+//            System.out.println("DEBUG: Response = " + res); // NEW
+//            System.out.println("DEBUG: Response is null? " + (res == null)); // NEW
+//            System.out.println("DEBUG: Response is empty? " + (res != null && res.isEmpty())); // NEW
+        } catch (Exception e) {
+            System.err.println("DEBUG: PostLogin threw exception:"); // NEW
+            e.printStackTrace();
+            error.setTextFill(Color.RED);
+            error.setText("Login request failed");
+            return; // Exit early
+        }
+
+        if (res == null || res.isEmpty()) {
+            System.err.println("DEBUG: PostLogin returned null/empty response");
+            error.setTextFill(Color.RED);
+            error.setText("No response from server");
+            return;
+        }
+
+//        System.out.println("DEBUG: Parsing response"); // NEW
+
+        String token = "";
+
+        try {
+            Map<String, Object> jsonUser = om.readValue(res, new TypeReference<Map<String,Object>>(){});
+            token = (String) jsonUser.get("token");
+            _id = (String) jsonUser.get("_id");
+            System.out.println(token);
+            CredentialsRequests.credentialsRetrieve(token);
+//            System.out.println("DEBUG: Parsed - Token: " + token + ", ID: " + _id);
+        } catch (JsonProcessingException exception) {
+            System.err.println("DEBUG: Failed to parse response:");
+            exception.printStackTrace();
+            error.setTextFill(Color.RED);
+            error.setText("Invalid server response");
+            return;
+        }
+
+//        System.out.println("DEBUG: Token null? " + (token == null));
+//        System.out.println("DEBUG: Token empty? " + (token != null && token.isEmpty()));
+
+        if(token != null && !token.isEmpty()) {
+//            System.out.println("DEBUG: Token valid, proceeding to WebSocket connection");
+            passID = _id;
+            manageToken().saveToken(_id, token);
+
+//            System.out.println("DEBUG: About to connect WebSocket");
+
+            try {
+//                System.out.println("DEBUG: connectToServer() completed");
+
+
+
+                String finalId = _id;
+                WebSocket.websocketio.INSTANCE.socketIoInstance.emit("Login", _id, (Ack) args -> {
+                    System.out.println("Login acknowledgment received");
+                    JSONObject response = (JSONObject) args[0];
+                    System.out.println("Response: " + response);
+                    try {
+
+                        SocketLogin(response.getString("status"));
+                    } catch (JSONException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+
+            } catch (Exception e) {
+                System.err.println("WebSocket connection error:");
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println("DEBUG: Token is invalid");
+            error.setTextFill(Color.RED);
+            error.setText("Invalid user or password");
+        }
     }
-    
-    
-}
-public static void SocketLogin(String status){
+    public static void SocketLogin(String status){
     if(status.equals("Unallowed")){
         App.isTokenOnline = true;
-        ChatZone.closeConnection();
+        WebSocket.websocketio.INSTANCE.socketIoInstance.disconnect();
+//        ChatZone.closeConnection();
         Platform.runLater(()->{
             LoginWindow lw = new LoginWindow();
             lw.showLoginWindow(passStage, null);

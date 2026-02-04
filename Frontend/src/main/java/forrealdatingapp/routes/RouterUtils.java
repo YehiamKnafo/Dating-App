@@ -4,30 +4,26 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import forrealdatingapp.App;
 import forrealdatingapp.TokenManager;
+import forrealdatingapp.credentials.Credentials;
+
 public class RouterUtils {
-    private static String HOST;
-    private static String TCP_HOST;
-    private static int TCP_PORT;
-    private static String CLOUDINARY_URL;
+    private static final Credentials credentials = new Credentials();
     private static ObjectMapper om = new ObjectMapper();
     private static TokenManager tm = new TokenManager();
 
+    public static Credentials getCredentials() {
+        return credentials;
+    }
+
     public static String getCludinaryUrl(){
-        CLOUDINARY_URL = App.getEnv("CLOUDINARY_URL");
-        return CLOUDINARY_URL;
+
+        return credentials.getCloudinaryUrl();
     }
-    public static String getHost(){
-        HOST = App.getEnv("EXPRESS");
-        return HOST;
+    public static String getHost(){ //wouldve got deleted but 30 usages...
+
+        return credentials.getExpressUrl();
     }
-    public static String getTCPHost(){
-        TCP_HOST = App.getEnv("TCP").split(":")[0];
-        return TCP_HOST;
-    }
-    public static int getTCPPort(){
-        TCP_PORT = Integer.parseInt(App.getEnv("TCP").split(":")[1]);
-        return TCP_PORT;
-    }
+
     public static TokenManager manageToken(){
         return tm;
     }

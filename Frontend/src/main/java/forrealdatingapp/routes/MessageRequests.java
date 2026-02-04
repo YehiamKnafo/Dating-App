@@ -1,10 +1,8 @@
 package forrealdatingapp.routes;
 
+import okhttp3.*;
+
 import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,111 +15,129 @@ import forrealdatingapp.dtos.UnreadCounter;
 import static forrealdatingapp.routes.RouterUtils.*;
 public class MessageRequests {
     public static List<Map<String, Object>> FetchMessages(String userId, String matchId) {
-    try {
-                Map<String, String> jsonMap = new HashMap<>(Map.of("matchID", matchId));
-                String json = manageJSON().writeValueAsString(jsonMap);
-                HttpClient client = HttpClient.newHttpClient();
-                // System.out.println(jsonPath.toAbsolutePath());
-                HttpRequest req = HttpRequest.newBuilder()
-                .uri(URI.create(getHost() + "messages/fetchmessages"))
-                .header("Content-Type", "application/json")
-                .header("x-api-key", manageToken().getToken(userId))
-                .POST(HttpRequest.BodyPublishers.ofString(json))
-                .build();
-                HttpResponse<String> response = client.send(req, HttpResponse.BodyHandlers.ofString());
-                // System.out.println("response code: "+ response.statusCode());
-                // System.out.println("response Body: " + response.body());
-                return manageJSON().readValue(response.body(), new TypeReference<List<Map<String, Object>>>(){});
-            } catch (IOException | InterruptedException e) {
-                System.out.println(e.getLocalizedMessage());
-                return null;
+        try {
+            Map<String, String> jsonMap = new HashMap<>(Map.of("matchID", matchId));
+            String json = manageJSON().writeValueAsString(jsonMap);
+
+            OkHttpClient client = new OkHttpClient.Builder()
+                    .connectTimeout(java.time.Duration.ofSeconds(10))
+                    .readTimeout(java.time.Duration.ofSeconds(10))
+                    .writeTimeout(java.time.Duration.ofSeconds(10))
+                    .build();
+
+            RequestBody body = RequestBody.create(
+                    json,
+                    MediaType.parse("application/json; charset=utf-8")
+            );
+
+            Request request = new Request.Builder()
+                    .url(getHost() + "messages/fetchmessages")
+                    .addHeader("x-api-key", manageToken().getToken(userId))
+                    .post(body)
+                    .build();
+
+            try (Response response = client.newCall(request).execute()) {
+                return manageJSON().readValue(response.body().string(), new TypeReference<List<Map<String, Object>>>(){});
             }
+        } catch (IOException e) {
+            System.out.println(e.getLocalizedMessage());
+            return null;
+        }
     }
     public static List<Message> getLastMessages(String userId) {
         try {
-                    // Create HttpClient
-                    HttpClient client = HttpClient.newHttpClient();
-                    // Build the GET request
-                    HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(getHost() + "messages/latest-messages")) // Target URL
-                    .header("x-api-key", manageToken().getToken(userId))
-                    .GET() // GET method
+            OkHttpClient client = new OkHttpClient.Builder()
+                    .connectTimeout(java.time.Duration.ofSeconds(10))
+                    .readTimeout(java.time.Duration.ofSeconds(10))
+                    .writeTimeout(java.time.Duration.ofSeconds(10))
                     .build();
-                    // Send the request and handle the response
-                    HttpResponse<String> response = client.send(req, HttpResponse.BodyHandlers.ofString());
-                    // Print response details
-                    // System.out.println("Response code: " + response.statusCode());
-                    // System.out.println("Response body getLastMessages: " + response.body());
-                    return manageJSON().readValue(response.body(), new TypeReference<List<Message>>(){});
-                    } catch (IOException | InterruptedException e) {
-                        System.out.println(e.getLocalizedMessage());
-                        return null;
-                    }
 
+            Request request = new Request.Builder()
+                    .url(getHost() + "messages/latest-messages")
+                    .addHeader("x-api-key", manageToken().getToken(userId))
+                    .build();
+
+            try (Response response = client.newCall(request).execute()) {
+                return manageJSON().readValue(response.body().string(), new TypeReference<List<Message>>(){});
+            }
+        } catch (IOException e) {
+            System.out.println(e.getLocalizedMessage());
+            return null;
+        }
     }
     public static void UpdateCounter(String id){
         try {
             String json = manageJSON().writeValueAsString(ChatZone.messageCounters);
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest req = HttpRequest.newBuilder()
-            .uri(URI.create(getHost() + "messages/update-counter"))
-            .header("Content-Type", "application/json")
-            .header("x-api-key", manageToken().getToken(id))
-            .PUT(HttpRequest.BodyPublishers.ofString(json))
-            .build(); //PUT request
-            HttpResponse<String> response = client.send(req, HttpResponse.BodyHandlers.ofString());
-            System.out.println("Response code: " + response.statusCode());
-            System.out.println("Response body: " + response.body());
-        } catch (IOException | InterruptedException e) {
+
+            OkHttpClient client = new OkHttpClient.Builder()
+                    .connectTimeout(java.time.Duration.ofSeconds(10))
+                    .readTimeout(java.time.Duration.ofSeconds(10))
+                    .writeTimeout(java.time.Duration.ofSeconds(10))
+                    .build();
+
+            RequestBody body = RequestBody.create(
+                    json,
+                    MediaType.parse("application/json; charset=utf-8")
+            );
+
+            Request request = new Request.Builder()
+                    .url(getHost() + "messages/update-counter")
+                    .addHeader("x-api-key", manageToken().getToken(id))
+                    .put(body)
+                    .build();
+
+            try (Response response = client.newCall(request).execute()) {
+                System.out.println("Response code: " + response.code());
+                System.out.println("Response body: " + response.body().string());
+            }
+        } catch (IOException e) {
             System.out.println(e.getLocalizedMessage());
         }
-        
     }
 
     public static List<UnreadCounter> ShowUnreadMessages(String id) {
         try {
-            // Create HttpClient
-            HttpClient client = HttpClient.newHttpClient();
-            // Build the GET request
-            HttpRequest req = HttpRequest.newBuilder()
-            .uri(URI.create(getHost() + "messages/unreadmessages")) // Target URL
-            .header("x-api-key", manageToken().getToken(id))
-            .GET() // GET method
-            .build();
-            // Send the request and handle the response
-            HttpResponse<String> response = client.send(req, HttpResponse.BodyHandlers.ofString());
-            // Print response details
-            // System.out.println("Response code: " + response.statusCode());
-            // System.out.println("Response body: " + response.body());
-            return manageJSON().readValue(response.body(), new TypeReference<List<UnreadCounter>>() {});
-        } catch (IOException | InterruptedException e) {
+            OkHttpClient client = new OkHttpClient.Builder()
+                    .connectTimeout(java.time.Duration.ofSeconds(10))
+                    .readTimeout(java.time.Duration.ofSeconds(10))
+                    .writeTimeout(java.time.Duration.ofSeconds(10))
+                    .build();
+
+            Request request = new Request.Builder()
+                    .url(getHost() + "messages/unreadmessages")
+                    .addHeader("x-api-key", manageToken().getToken(id))
+                    .build();
+
+            try (Response response = client.newCall(request).execute()) {
+                return manageJSON().readValue(response.body().string(), new TypeReference<List<UnreadCounter>>() {});
+            }
+        } catch (IOException e) {
             System.out.println(e.getLocalizedMessage());
-            return null; 
+            return null;
         }
-        
     }
 
     public static void ResetMessageCounter(String id, String matchId) {
         try {
-            HttpClient client = HttpClient.newHttpClient();
+            OkHttpClient client = new OkHttpClient.Builder()
+                    .connectTimeout(java.time.Duration.ofSeconds(10))
+                    .readTimeout(java.time.Duration.ofSeconds(10))
+                    .writeTimeout(java.time.Duration.ofSeconds(10))
+                    .build();
 
-            // Add query parameters to the URL
-           
+            Request request = new Request.Builder()
+                    .url(getHost() + "messages/resetCounter/" + matchId)
+                    .addHeader("x-api-key", manageToken().getToken(id))
+                    .method("PATCH", RequestBody.create("", null))
+                    .build();
 
-            HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create(getHost() + "messages/resetCounter/" + matchId)) // URL with query params
-            .method("PATCH", HttpRequest.BodyPublishers.noBody()) // No request body
-            .header("x-api-key", manageToken().getToken(id))
-            .build();
-
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-            System.out.println("Response Code: " + response.statusCode());
-            System.out.println("Response Body: " + response.body());
+            try (Response response = client.newCall(request).execute()) {
+                System.out.println("Response Code: " + response.code());
+                System.out.println("Response Body: " + response.body().string());
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        
     }
 
     

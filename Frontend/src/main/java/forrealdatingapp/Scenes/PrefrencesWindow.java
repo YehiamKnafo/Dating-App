@@ -4,6 +4,8 @@ package forrealdatingapp.Scenes;
 import java.time.LocalDate;
 import java.time.Period;
 
+import forrealdatingapp.TokenManager;
+import forrealdatingapp.WebSocket;
 import org.controlsfx.control.RangeSlider;
 
 import forrealdatingapp.dtos.User;
@@ -155,7 +157,22 @@ public class PrefrencesWindow {
                 // Optionally transition to another stage
             
         });
+        Button deleteAccountBtn = ProfilePage.createStyledButton("Delete Account", "delete");
+        deleteAccountBtn.setOnAction(actionEvent -> {
 
+            boolean isDeleted = UserProfileRequests.deleteAccount(id);
+            if (isDeleted){
+                Alert alert = new Alert(Alert.AlertType.INFORMATION, "account deleted Successfully", ButtonType.OK);
+                alert.showAndWait();
+                WebSocket.websocketio.INSTANCE.socketIoInstance.disconnect();
+                TokenManager tokenManager = new TokenManager();
+                tokenManager.clearToken(id);
+                LoginWindow loginWindow = new LoginWindow();
+                loginWindow.showLoginWindow(stage, null);
+
+            }
+
+        });
         // Add all elements to the layout
         root.getChildren().addAll(
                 backtomainpage,
@@ -165,7 +182,9 @@ public class PrefrencesWindow {
                 preferenceLabel, preferenceBox,
                 slider,
                 bioLabel, bioTextArea,
-                submitButton
+                submitButton,
+                deleteAccountBtn
+
         );
     
 
