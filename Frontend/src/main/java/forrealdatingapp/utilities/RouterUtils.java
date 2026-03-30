@@ -5,12 +5,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import forrealdatingapp.App;
 import forrealdatingapp.TokenManager;
 import forrealdatingapp.credentials.Credentials;
+import okhttp3.OkHttpClient;
 
 public class RouterUtils {
     private static final Credentials credentials = new Credentials();
     private static ObjectMapper om = new ObjectMapper();
     private static TokenManager tm = new TokenManager();
-
+    public static final OkHttpClient BASE_CLIENT = new OkHttpClient.Builder().build();
     public static Credentials getCredentials() {
         return credentials;
     }
