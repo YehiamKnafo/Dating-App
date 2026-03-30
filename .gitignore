@@ -18,3 +18,4 @@ jre
 .gradle
 node_modules
 token-db-implementation.js
+/Frontend/src/main/resources
