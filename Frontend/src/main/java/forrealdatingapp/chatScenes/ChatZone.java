@@ -354,7 +354,7 @@ public class ChatZone {
             String finalSenderID = senderID;
             // String finalSenderName = senderName;
             System.out.println("line 347");
-            System.out.println(senderID);
+//            System.out.println(senderID);
             String finalSenderName = senderName;
             Platform.runLater(() -> {
                 // Check if we are currently looking at this person's chat
