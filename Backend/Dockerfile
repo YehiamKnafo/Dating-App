@@ -1,6 +1,4 @@
-# Use official Node.js v20.14.0 image
-FROM node:20.14.0-alpine
-
+FROM node:22.22-alpine
 # Set working directory
 WORKDIR /app
 
@@ -11,13 +9,15 @@ COPY ./package*.json ./
 RUN npm ci
 
 # Copy the rest of the app
+COPY ./secret ./secret
 COPY ./db ./db
-COPY ./public ./public
-COPY ./middlewares ./middlewares
 COPY ./models ./models
+COPY ./middlewares ./middlewares
 COPY ./routes ./routes
+COPY ./socketio ./socketio
+COPY ./cloudinaryApi ./cloudinaryApi
+COPY ./emailApi ./emailApi
 COPY ./app.js ./
-COPY ./NodemailerConfig.js ./
 
 
 # Command to run the app (adjust to your entry file)

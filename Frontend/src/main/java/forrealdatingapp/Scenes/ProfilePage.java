@@ -12,6 +12,7 @@ import java.util.UUID;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import forrealdatingapp.App;
 import forrealdatingapp.dtos.User;
 import forrealdatingapp.routes.FileRequests;
 import forrealdatingapp.routes.UserProfileRequests;
@@ -21,10 +22,7 @@ import javafx.animation.PauseTransition;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -39,8 +37,10 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
+import static forrealdatingapp.routes.FileRequests.updateProfilePicture;
+
 public class ProfilePage {
-    private static User user;
+    public static User user;
     private static final ObjectMapper om = new ObjectMapper();
     private static final String PRIMARY_COLOR = "#2196F3";
     private static final String SECONDARY_COLOR = "#FFF";
@@ -57,30 +57,28 @@ public class ProfilePage {
     
     private final Label notificationLabel = new Label();
     private final PauseTransition notificationTimeout = new PauseTransition(Duration.seconds(3));
-    private String _id;
-    public void showProfilePage(Stage stage, String _id, User currentUser) throws URISyntaxException {
+    public void showProfilePage(Stage stage, User currentUser) throws URISyntaxException {
         user = currentUser;
-        this._id = _id;
         // Initialize example data
         name.setText(user.getFirstName() + " " + user.getLastName());
         age.setText(Integer.toString(user.getAge()));
         bio.setText(user.getBio());
         List<String> userPictures = user.getPictures(); // Assumes pictures are stored as Strings (e.g., URLs or file paths)
-        System.out.println(userPictures);
+//        System.out.println(userPictures);
         initializePictureGrid(userPictures);
 
         VBox root = createStyledRoot();
         setupNotificationLabel();
-        
+
         VBox header = createProfileHeader();
         VBox pictureSection = createPictureSection();
-        VBox details = createDetailsSection(stage,_id);
+        VBox details = createDetailsSection(stage);
         
         root.getChildren().addAll(notificationLabel, header, pictureSection, details);
         ScrollPane scrollPane = new ScrollPane(root);  // Make the VBox scrollable
         scrollPane.setFitToWidth(true);  // Make content fit to ScrollPane width
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
-        Scene scene = new Scene(scrollPane, 800, 900);
+        Scene scene = new Scene(scrollPane, 900, 800);
         stage.setTitle("Profile");
         stage.setScene(scene);
         stage.show();
@@ -107,15 +105,33 @@ public class ProfilePage {
         Button editProfilePic = createStyledButton("Change Profile Picture", "photo");
         Button removeProfilePic = createStyledButton("Remove Profile Picture", "photo");
         removeProfilePic.setOnAction((e) -> {
-         avatarPlaceholder.getChildren().clear();
-         avatarPlaceholder.getChildren().add(createAvatarPlaceholder());
-            
+        if (!avatarPlaceholder.getChildren().isEmpty()){
+            avatarPlaceholder.getChildren().stream().findFirst().ifPresent(node->{
+                if (node instanceof ImageView){
+
+                    // todo: change ok to delete from backend not front
+                    boolean ok = CloudinaryUtils.deleteFromCloudinaryByUrl(user.getProfilePicture());
+                    if (ok){
+                        UserProfileRequests.updateProfilePicture(App.id, "");
+                        user.setProfilePicture("");
+                         avatarPlaceholder.getChildren().clear();
+                         avatarPlaceholder.getChildren().add(createAvatarPlaceholder());
+                    }
+//                    else System.out.println("cant delete pfp");
+                }
+
+            });
+        }
+
+
+
 
 
         });
         editProfilePic.setOnAction(e -> handleProfilePictureChange(avatarPlaceholder));
-        if (user.getProfilePicture() != null) {
-            user.getProfilePicture();
+
+
+        if (user.getProfilePicture() != null && !user.getProfilePicture().isEmpty()) {
             Image image;
             try {
                 image = ImageUtils.loadCorrectedImage(user.getProfilePicture());
@@ -179,11 +195,14 @@ public class ProfilePage {
         FileChooser fileChooser = createImageFileChooser();
         File file = fileChooser.showOpenDialog(null);
         if (file != null) {
-            System.out.println(file.toString());
+//            System.out.println(file.toString());
             try {
+                //todo: use pfp to remove old pic
+
                 String urlToDB = CloudinaryUtils.Upload(file);
-                Image image = ImageUtils.loadCorrectedImage(urlToDB);
+                Image image = ImageUtils.loadCorrectedImage(urlToDB);//very good
                 ImageView imageView = new ImageView(image);
+                imageView.setUserData(urlToDB);
                 imageView.setFitHeight(120);
                 imageView.setFitWidth(120);
                 
@@ -192,20 +211,21 @@ public class ProfilePage {
                 imageView.setClip(clip);
                 imageView.setPreserveRatio(true);
                 // Replace placeholder with new image
-                Map<String, String> jsonMap = new HashMap<>();
-                
-                jsonMap.put("url", urlToDB);
-                boolean success = UserProfileRequests.updateProfilePicture(_id, jsonMap);
-                if(success){
 
+                boolean success = UserProfileRequests.updateProfilePicture(App.id, urlToDB);
+                if(success){
+                    boolean ok = CloudinaryUtils.deleteFromCloudinaryByUrl(user.getProfilePicture());
+                    if (ok){
+                        System.out.println("old picture deleted succesfully");
+
+                    }
                     avatarContainer.getChildren().clear();
                     avatarContainer.getChildren().add(imageView);
                     showSuccess("Profile picture updated successfully");
+                    user.setProfilePicture(urlToDB);
+                    //todo: can make a the picture path static then use it all across
                 }
-                else{
 
-                    showError("Failed to update image");
-                }
            
             } catch (Exception e) {
                 showError("Failed to load image: " + e.getMessage());
@@ -231,7 +251,7 @@ public class ProfilePage {
         return pictureSection;
     }
 
-    private VBox createDetailsSection(Stage stage, String _id) {
+    private VBox createDetailsSection(Stage stage) {
     // Clear existing children (if any)
     detailsSection.getChildren().clear();
 
@@ -255,14 +275,14 @@ public class ProfilePage {
     removeBio.setOnAction((e)->{
         User bioChange = new User();
         bioChange.setBio("");
-        UserProfileRequests.UpdateBio(bioChange, _id);
+        UserProfileRequests.UpdateBio(bioChange, App.id);
         showSuccess("Bio removed successfuly");
 
     });
     Button backToProfileButton = createStyledButton("Back to Profile", "back");
     backToProfileButton.setOnAction((actionEvent) -> {
         MainPage mp = new MainPage();
-        mp.showMainPage(stage, _id);
+        mp.showMainPage(stage);
     });
     HBox options = new HBox(15);
     options.getChildren().addAll(removeBio, backToProfileButton);
@@ -390,10 +410,10 @@ public class ProfilePage {
         File file = fileChooser.showOpenDialog(null);
         if (file != null) {
             try {
-                addPictureToGrid(file);
-                //add also to db here
-                Map<String, String> jsonMap = new HashMap<>();
+                //critical mistake -- here i should upload the file to the cloud
                 String urlToDB = CloudinaryUtils.Upload(file);
+                addPictureToGrid(file,urlToDB);
+                Map<String, String> jsonMap = new HashMap<>();
                 jsonMap.put("url",urlToDB);
                 // handle a cloud entry and create a url here for now file for system path
                 String json = om.writeValueAsString(jsonMap);
@@ -405,10 +425,17 @@ public class ProfilePage {
         }
     }
     
-    private void addPictureToGrid(File file) {
+    private void addPictureToGrid(File file, String url) {
         // Create image view
         Image image = new Image(file.toURI().toString());
+        try {
+
+            image = ImageUtils.loadCorrectedImage(image.getUrl());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         ImageView imageView = new ImageView(image);
+        imageView.setUserData(url);
         imageView.setFitHeight(150);
         imageView.setFitWidth(150);
         
@@ -428,10 +455,10 @@ public class ProfilePage {
         buttonContainer.setAlignment(Pos.CENTER);
         
         Button editButton = createStyledButton("Edit", "edit");
-        editButton.setOnAction(e -> handleEditPicture(imageView));
-        
+        editButton.setOnAction(e -> handleEditPicture(imageView, url));
+//
         Button removeButton = createStyledButton("Remove", "remove");
-        removeButton.setOnAction(e -> handleRemovePicture(pictureContainer));
+        removeButton.setOnAction(e -> handleRemovePicture(pictureContainer, url));
         
         buttonContainer.getChildren().addAll(editButton, removeButton);
         pictureContainer.getChildren().addAll(imageView, buttonContainer);
@@ -443,36 +470,72 @@ public class ProfilePage {
         pictureViews.add(imageView);
     }
     
-    private void handleEditPicture(ImageView imageView) {
+    private void handleEditPicture(ImageView imageView, String picturePath) {
         FileChooser fileChooser = createImageFileChooser();
         File file = fileChooser.showOpenDialog(null);
         if (file != null) {
             try {
-                Image newImage = new Image(file.toURI().toString());
-                imageView.setImage(newImage);
-                showSuccess("Picture updated successfully");
+                String newPicUrl = CloudinaryUtils.Upload(file);
+                if (newPicUrl != null && !newPicUrl.isEmpty()){
+                String oldVal = (String) imageView.getUserData();
+                if (oldVal == null){
+                    oldVal = picturePath;
+                }
+                boolean deleteFromCloud = CloudinaryUtils.deleteFromCloudinaryByUrl(oldVal);
+                boolean editAndDeletePic = FileRequests.updatePicture(App.id, new HashMap<>(Map.of("oldUrl", oldVal,
+                        "newUrl",newPicUrl)));
+                if (deleteFromCloud && editAndDeletePic){
+                    Image newImage = ImageUtils.loadCorrectedImage(newPicUrl);
+                    imageView.setImage(newImage);
+                    imageView.setUserData(newPicUrl);
+                    showSuccess("Picture updated successfully");
+
+                }
+                }
+
             } catch (Exception e) {
                 showError("Failed to update picture: " + e.getMessage());
+                e.printStackTrace();
             }
         }
     }
-    
-    private void handleRemovePicture(VBox pictureContainer) {
-        pictureGrid.getChildren().remove(pictureContainer);
-        
+
+
+
+    private void handleRemovePicture(VBox pictureContainer, String picturePath) {
+
         // Find and remove the ImageView from our list
         pictureContainer.getChildren().stream()
-            .filter(node -> node instanceof ImageView)
-            .map(node -> (ImageView) node)
-            .findFirst()
-            .ifPresent(pictureViews::remove);
-        
+                .filter(node -> node instanceof ImageView)
+                .map(node -> (ImageView) node)
+                .findFirst()
+                .ifPresent(imageView -> {
+                    // 1. Get the URL
+                 String url = picturePath;
+                 if (imageView.getUserData() != null){
+                     url = (String)imageView.getUserData();
+                 }
+
+                boolean picDeletedFromCloud = CloudinaryUtils.deleteFromCloudinaryByUrl(url);
+                boolean picDeletedFromDb = UserProfileRequests.deletePicture(App.id, new HashMap<>(Map.of("url", url)));
+                System.out.println(picDeletedFromCloud);
+                System.out.println(picDeletedFromDb);
+                if (picDeletedFromDb && picDeletedFromCloud){
+                    pictureContainer.getChildren().remove(imageView);
+                    pictureViews.remove(imageView); // Remove the URL from your data list
+                    System.out.println("Removed URL: " + picturePath);
+                }
+
+
+                });
+        pictureGrid.getChildren().remove(pictureContainer);
+
         // Reorganize the grid
         reorganizePictureGrid();
         showSuccess("Picture removed successfully");
-        //TODO: REMOVE PICTURE FROM DATABASE
     }
-    
+        //TODO: REMOVE PICTURE FROM DATABASE
+
     private void reorganizePictureGrid() {
         // Clear the grid
         pictureGrid.getChildren().clear();
@@ -493,7 +556,7 @@ public class ProfilePage {
         int col = 0, row = 0;
         for (String picturePath : picturePaths) {
             try {
-                Image img = ImageUtils.loadCorrectedImage(picturePath);
+                Image img = ImageUtils.loadCorrectedImage(picturePath);//very good
                 ImageView imageView = new ImageView(img);
                 imageView.setFitHeight(150);
                 imageView.setFitWidth(150);
@@ -515,10 +578,16 @@ public class ProfilePage {
                 buttonContainer.setAlignment(Pos.CENTER);
                 
                 Button editButton = createStyledButton("Edit", "edit");
-                editButton.setOnAction(e -> handleEditPicture(imageView));
+                editButton.setOnAction(e -> handleEditPicture(imageView,picturePath));
                 
                 Button removeButton = createStyledButton("Remove", "remove");
-                removeButton.setOnAction(e -> handleRemovePicture(pictureContainer));
+                removeButton.setOnAction(e -> {
+                    if (pictureViews.size() > 1)
+                        handleRemovePicture(pictureContainer, picturePath);
+                    else {
+                        showError("Must have at least 1 photo, use edit button to replace picture");
+                    }
+                });
                 
                 buttonContainer.getChildren().addAll(editButton, removeButton);
                 pictureContainer.getChildren().addAll(imageView, buttonContainer);

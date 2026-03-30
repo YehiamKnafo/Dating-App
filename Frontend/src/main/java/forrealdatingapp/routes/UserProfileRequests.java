@@ -1,24 +1,25 @@
 package forrealdatingapp.routes;
 
+import forrealdatingapp.utilities.TimeoutInterceptor;
 import okhttp3.*;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import forrealdatingapp.dtos.User;
-import static forrealdatingapp.routes.RouterUtils.getHost;
-import static forrealdatingapp.routes.RouterUtils.manageJSON;
-import static forrealdatingapp.routes.RouterUtils.manageToken;
+
+import static forrealdatingapp.utilities.RouterUtils.*;
+
 public class UserProfileRequests {
     public static User getMyProfile(String _id) {
-        OkHttpClient client = new OkHttpClient.Builder()
-                .connectTimeout(java.time.Duration.ofSeconds(10))
-                .readTimeout(java.time.Duration.ofSeconds(10))
-                .writeTimeout(java.time.Duration.ofSeconds(10))
-                .build();
 
+        OkHttpClient client = BASE_CLIENT.newBuilder()
+                .addInterceptor(new TimeoutInterceptor(30))
+                .build();
         Request request = new Request.Builder()
                 .url(getHost() + "profile")
                 .addHeader("x-api-key", manageToken().getToken(_id))
@@ -34,12 +35,11 @@ public class UserProfileRequests {
         }
     }
      public static void updateProfile(String json, String _id) {
+         OkHttpClient client = BASE_CLIENT.newBuilder()
+                 .addInterceptor(new TimeoutInterceptor(30))
+                 .build();
         try {
-            OkHttpClient client = new OkHttpClient.Builder()
-                    .connectTimeout(java.time.Duration.ofSeconds(10))
-                    .readTimeout(java.time.Duration.ofSeconds(10))
-                    .writeTimeout(java.time.Duration.ofSeconds(10))
-                    .build();
+
 
             RequestBody body = RequestBody.create(
                     json,
@@ -54,65 +54,62 @@ public class UserProfileRequests {
 
             try (Response response = client.newCall(request).execute()) {
                 System.out.println("Response code: " + response.code());
-                System.out.println("Response body: " + response.body().string());
+//                System.out.println("Response body: " + response.body().string());
             }
         } catch (IOException e) {
             System.out.println(e.getLocalizedMessage());
         }
     }
 
-    public static void addPicture(String json, String _id) {
+//    public static void addPicture(String json, String _id) {
+//        OkHttpClient client = BASE_CLIENT.newBuilder()
+//                .addInterceptor(new TimeoutInterceptor(30))
+//                .build();
+//        try {
+//
+//
+//            RequestBody body = RequestBody.create(
+//                    json,
+//                    MediaType.parse("application/json; charset=utf-8")
+//            );
+//
+//            Request request = new Request.Builder()
+//                    .url(getHost() + "profile/addpicture/" + _id)
+//                    .addHeader("x-api-key", manageToken().getToken(_id))
+//                    .put(body)
+//                    .build();
+//
+//            try (Response response = client.newCall(request).execute()) {
+//                System.out.println("Response code: " + response.code());
+////                System.out.println("Response body: " + response.body().string());
+//            }
+//        } catch (IOException e) {
+//            System.out.println(e.getLocalizedMessage());
+//        }
+//    }
+    public static boolean updateProfilePicture(String _id, String url) {
+        String encodedUrl = URLEncoder.encode(url, StandardCharsets.UTF_8);
+        OkHttpClient client = BASE_CLIENT.newBuilder()
+                .addInterceptor(new TimeoutInterceptor(30))
+                .build();
         try {
-            OkHttpClient client = new OkHttpClient.Builder()
-                    .connectTimeout(java.time.Duration.ofSeconds(10))
-                    .readTimeout(java.time.Duration.ofSeconds(10))
-                    .writeTimeout(java.time.Duration.ofSeconds(10))
-                    .build();
+
+
 
             RequestBody body = RequestBody.create(
-                    json,
+                    "",
                     MediaType.parse("application/json; charset=utf-8")
             );
 
             Request request = new Request.Builder()
-                    .url(getHost() + "profile/addpicture/" + _id)
+                    .url(getHost() + "profile/changeprofilepic?url=" + encodedUrl)
                     .addHeader("x-api-key", manageToken().getToken(_id))
                     .put(body)
                     .build();
 
             try (Response response = client.newCall(request).execute()) {
                 System.out.println("Response code: " + response.code());
-                System.out.println("Response body: " + response.body().string());
-            }
-        } catch (IOException e) {
-            System.out.println(e.getLocalizedMessage());
-        }
-    }
-    public static boolean updateProfilePicture(String _id, Map<String,String> jsonMap) {
-        try {
-            String json = manageJSON().writeValueAsString(jsonMap);
-            System.out.println(json);
-
-            OkHttpClient client = new OkHttpClient.Builder()
-                    .connectTimeout(java.time.Duration.ofSeconds(10))
-                    .readTimeout(java.time.Duration.ofSeconds(10))
-                    .writeTimeout(java.time.Duration.ofSeconds(10))
-                    .build();
-
-            RequestBody body = RequestBody.create(
-                    json,
-                    MediaType.parse("application/json; charset=utf-8")
-            );
-
-            Request request = new Request.Builder()
-                    .url(getHost() + "profile/changeprofilepic")
-                    .addHeader("x-api-key", manageToken().getToken(_id))
-                    .put(body)
-                    .build();
-
-            try (Response response = client.newCall(request).execute()) {
-                System.out.println("Response code: " + response.code());
-                System.out.println("Response body: " + response.body().string());
+//                System.out.println("Response body: " + response.body().string());
                 return response.code() == 200;
             }
         } catch (IOException e) {
@@ -120,16 +117,15 @@ public class UserProfileRequests {
             return false;
         }
     }
-    public static void UpdatePreferrences(User user,String id) {
+    public static String UpdatePreferrences(User user,String id) {
         try {
+        OkHttpClient client = BASE_CLIENT.newBuilder()
+                .addInterceptor(new TimeoutInterceptor(30))
+                .build();
             String json = manageJSON().writeValueAsString(user);
             System.out.println(json);
 
-            OkHttpClient client = new OkHttpClient.Builder()
-                    .connectTimeout(java.time.Duration.ofSeconds(10))
-                    .readTimeout(java.time.Duration.ofSeconds(10))
-                    .writeTimeout(java.time.Duration.ofSeconds(10))
-                    .build();
+
 
             RequestBody body = RequestBody.create(
                     json,
@@ -141,24 +137,32 @@ public class UserProfileRequests {
                     .addHeader("x-api-key", manageToken().getToken(id))
                     .method("PATCH", body)
                     .build();
-
             try (Response response = client.newCall(request).execute()) {
+            int code = response.code();
                 System.out.println("Response Code: " + response.code());
-                System.out.println("Response Body: " + response.body().string());
+//                System.out.println("Response Body: " + response.body().string());
+
+                if (code == 400){
+                    return "Enter a valid date";
+                }
+                return "";
             }
+
+
         } catch (Exception e) {
             e.printStackTrace();
+            return "";
         }
+
     }
     public static void UpdateBio(User bioChange, String _id) {
+        OkHttpClient client = BASE_CLIENT.newBuilder()
+                .addInterceptor(new TimeoutInterceptor(30))
+                .build();
         try {
             String json = manageJSON().writeValueAsString(bioChange);
 
-            OkHttpClient client = new OkHttpClient.Builder()
-                    .connectTimeout(java.time.Duration.ofSeconds(10))
-                    .readTimeout(java.time.Duration.ofSeconds(10))
-                    .writeTimeout(java.time.Duration.ofSeconds(10))
-                    .build();
+
 
             RequestBody body = RequestBody.create(
                     json,
@@ -179,10 +183,36 @@ public class UserProfileRequests {
             e.printStackTrace();
         }
     }
-    public static boolean deleteAccount(String _id){
+    public static boolean deletePicture(String token, Map<String,Object> reqbody){
+        String encodedUrl = URLEncoder.encode(reqbody.get("url").toString(), StandardCharsets.UTF_8);
+        OkHttpClient client = BASE_CLIENT.newBuilder()
+                .addInterceptor(new TimeoutInterceptor(30))
+                .build();
         try {
-            OkHttpClient client = new OkHttpClient().newBuilder()
+
+
+            Request request = new Request.Builder()
+                    .url(getHost() + "profile/deletepicture?url=" + encodedUrl)
+                    .delete()
+                    .addHeader("x-api-key", manageToken().getToken(token))
                     .build();
+            try (Response response = client.newCall(request).execute()) {
+                return response.code() == 200;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+
+
+    public static boolean deleteAccount(String _id){
+        OkHttpClient client = BASE_CLIENT.newBuilder()
+                .addInterceptor(new TimeoutInterceptor(30))
+                .build();
+        try {
+
             MediaType mediaType = MediaType.parse("application/json; charset=utf-8");
 
             RequestBody body = RequestBody.create(mediaType, "");

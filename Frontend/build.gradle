@@ -31,9 +31,9 @@ jar {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
  
     }
-    from('.') {   // <-- project root
-        include '.env'
-    }
+//    from('.') {   // <-- project root
+//        include '.env'
+//    }
 }
 def launch4jOutputDir = "${buildDir}/launch4j"
 
@@ -157,8 +157,9 @@ implementation 'com.cloudinary:cloudinary-core:2.2.0'
 implementation 'org.controlsfx:controlsfx:11.1.2'
 implementation ('io.socket:socket.io-client:2.1.1')
 implementation 'com.squareup.okhttp3:okhttp:4.12.0'
-
-
-    implementation 'org.slf4j:slf4j-api:2.0.17'
+implementation 'org.slf4j:slf4j-api:2.0.17'
+implementation 'org.kordamp.ikonli:ikonli-javafx:12.4.0'
+implementation 'org.kordamp.ikonli:ikonli-fontawesome6-pack:12.4.0'
+implementation 'org.jfxtras:jfxtras-controls:17-r1'
 }
 

@@ -1,12 +1,16 @@
 FrontOnlyEnvScript.bat
+.github
 .env
 /Backend/.env
 /Backend/contents/secret/
 backendcontentfordevops/
 build
+/Backend/NodemailerConfig.js
+/Backend/middlewares/rateLimiter.js
 .vscode
 bin
 .env
+Frontend/.idea
 jre
 .gradle
 node_modules

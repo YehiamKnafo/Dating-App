@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import forrealdatingapp.App;
 import forrealdatingapp.WebSocket;
 import forrealdatingapp.chatScenes.ChatZone;
 import forrealdatingapp.dtos.Message;
@@ -50,12 +51,13 @@ public class MatchesPage {
     public static Map<String, String> lastMessageTxtMap = new HashMap<>();
     public static Map<String, Label> MessageCounterMap = new HashMap<>();
     private static Label statusLabel;
+    private static Stage passStage;
     
     
 
 
-    public void showMatchesPage(Stage stage,String _id) throws IOException {
-
+    public void showMatchesPage(Stage stage) throws IOException {
+        passStage = stage;
         ChatZone.inChatZoneScreen = false;
         setupTypingListeners();
         cleanCurrentUnmatch();
@@ -64,7 +66,7 @@ public class MatchesPage {
         Button backToProfileButton = new Button("Back to Main Screen");
         backToProfileButton.setOnAction((actionEvent) -> {
             MainPage mainPage = new MainPage();
-            mainPage.showMainPage(stage,_id);
+            mainPage.showMainPage(stage);
         });
         
         // Create a list of matches (for demonstration purposes)
@@ -75,16 +77,16 @@ public class MatchesPage {
         pagination.setStyle("-fx-page-information-visible: false;");
         pagination.setMaxPageIndicatorCount(1);
         pagination.setPageFactory((pageIndex)->{
-            System.out.println(pageIndex);
-            List<Match> matches = getMatches(_id, pageIndex + 1);
+//            System.out.println(pageIndex);
+            List<Match> matches = getMatches(App.id, pageIndex + 1);
             
             if (!matches.isEmpty()){
                 matchesListView = new ListView<>();
                 for (Match match : matches) {
-                    System.out.println(match);
+//                    System.out.println(match);
                     HBox matchBox;
                     try {
-                        matchBox = createMatchBox(match, stage,_id);
+                        matchBox = createMatchBox(match, stage);
                         matchesListView.getItems().add(matchBox);
                     } catch (IOException e) {
                         // TODO Auto-generated catch block
@@ -97,12 +99,12 @@ public class MatchesPage {
                 }
                 MatchesPage.setUserStatus();
 //                ChatZone.writer.println("Broadcast|" + _id);
-                List<Message> lastMessages =  MessageRequests.getLastMessages(_id);
+                List<Message> lastMessages =  MessageRequests.getLastMessages(App.id);
                 List<Message> filteredMessages = lastMessages.stream()
                 .filter(e -> matches.stream()
                         .anyMatch(match -> e.getRecieverID().equals(match.getId()) || e.getSenderID().equals(match.getId())))
                 .toList();
-                System.out.println(filteredMessages);
+//                System.out.println(filteredMessages);
             
         
                 for(Message msg : filteredMessages){
@@ -112,10 +114,10 @@ public class MatchesPage {
 //                    System.out.println("sender - id v");
 //                    System.out.println(SenderID);
                     
-                    if (SenderID.equals(_id)) {
+                    if (SenderID.equals(App.id)) {
                         if(lastMessageMap.get(recieverID) != null){
                             lastMessageTxtMap.clear();
-                            lastMessageTxtMap.put(_id, msg.getMessage());
+                            lastMessageTxtMap.put(App.id, msg.getMessage());
                             lastMessageMap.get(recieverID).setText("me: " + msg.getMessage());
                         }
                         matchesListView.getItems().remove(matchBoxMap.get(recieverID));
@@ -134,7 +136,7 @@ public class MatchesPage {
         
                     }
                 } 
-                List<UnreadCounter> unreadCounters = MessageRequests.ShowUnreadMessages(_id);
+                List<UnreadCounter> unreadCounters = MessageRequests.ShowUnreadMessages(App.id);
                 List<UnreadCounter> filteredCounters = unreadCounters.stream()
                 .filter(e -> matches.stream()
                 .anyMatch(match -> e.getMatched_user_id().equals(match.getId()))).toList();
@@ -180,7 +182,7 @@ public class MatchesPage {
         stage.setScene(scene);
         stage.setTitle("Matches");
         stage.show();
-        WebSocket.websocketio.INSTANCE.socketIoInstance.emit("RequestMatchStatus", _id);
+        WebSocket.websocketio.INSTANCE.socketIoInstance.emit("RequestMatchStatus", App.id);
 
 //        ChatZone.writer.println("Broadcast|" + _id);
         // List<Message> lastMessages =  UsersRouteRequests.getLastMessages(_id);
@@ -207,7 +209,7 @@ public class MatchesPage {
     }
 
     // Helper method to create a match box (HBox) for each match
-private HBox createMatchBox(Match match,Stage stage,String _id) throws IOException, URISyntaxException {
+private HBox createMatchBox(Match match,Stage stage) throws IOException, URISyntaxException {
     // System.out.println("match box entry");
     // Create an ImageView for the profile picture
     if(!statusMap.containsKey(match.getId())){
@@ -261,10 +263,24 @@ private HBox createMatchBox(Match match,Stage stage,String _id) throws IOExcepti
     unmatchButton.setOnAction(e -> {
         System.out.println("test-button-unmatch");
 
-        boolean unmatched = MatchingRequests.Unmatch( _id, match._id);
+        boolean unmatched = MatchingRequests.Unmatch( App.id, match._id);
         if(unmatched){
             //progress: socket logic done, database logic missing
             matchesListView.getItems().remove(matchBox);
+
+            matchesListView.getItems().remove(matchBoxMap.get(match._id));
+            lastMessageTxtMap.put(match._id, "");
+            if (lastMessageMap.get(match._id) != null)
+                lastMessageMap.get(match._id).setText(null);
+            messageCounters.put(match._id, 0);
+            if (MessageCounterMap.get(match._id) != null)
+                MessageCounterMap.get(match._id).setText(null);
+            if (MessagesMap.get(match._id) != null) {
+                MessagesMap.get(match._id).clear();
+                MessagesMap.remove(match._id);
+            }
+
+
             WebSocket.websocketio.INSTANCE.socketIoInstance.emit("unmatchSocket", match._id, (Ack) args->{
                 JSONObject data = (JSONObject) args[0];
                 try {
@@ -274,7 +290,7 @@ private HBox createMatchBox(Match match,Stage stage,String _id) throws IOExcepti
                 }
             });
 //            ChatZone.writer.println("UnmatchSocket| match:" + match._id);
-            ChatZone.chatArea = null;
+//            ChatZone.chatArea = null;
         }
 
 
@@ -288,7 +304,7 @@ showProfile.setStyle("-fx-background-color: transparent; -fx-border-color: blue;
 showProfile.setOnAction(e -> {
     MatchedProfilePage mpp = new MatchedProfilePage();
     try {
-        mpp.showMatchedProfilePage(stage, _id, match._id);
+        mpp.showMatchedProfilePage(stage, match._id);
     } catch (URISyntaxException e1) {
         // TODO Auto-generated catch block
         e1.printStackTrace();
@@ -319,7 +335,7 @@ messageCounter.setTextFill(Color.BLUE);
         System.out.println(match.getId());
         if (chatZone == null)
             chatZone = new ChatZone();
-        chatZone.showChatZone(stage, match,_id);
+        chatZone.showChatZone(stage, match);
         ChatZone.inChatZoneScreen = true;
         
         
@@ -404,6 +420,26 @@ messageCounter.setTextFill(Color.BLUE);
             System.out.println(finalMatchID);
             Platform.runLater(()->{
                 matchesListView.getItems().remove(matchBoxMap.get(finalMatchID));
+                lastMessageTxtMap.put(finalMatchID, "");
+                if (lastMessageMap.get(finalMatchID) != null)
+                    lastMessageMap.get(finalMatchID).setText(null);
+                messageCounters.put(finalMatchID, 0);
+                if (MessageCounterMap.get(finalMatchID) != null)
+                    MessageCounterMap.get(finalMatchID).setText(null);
+                if (MessagesMap.get(finalMatchID) != null) {
+                    MessagesMap.get(finalMatchID).clear();
+                    MessagesMap.remove(finalMatchID);
+                }
+                if (inChatZoneScreen){
+                    MatchesPage matchesPage = new MatchesPage();
+                    try {
+                        matchesPage.showMatchesPage(passStage);
+                        passStage = null;
+                        inChatZoneScreen = false;
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
             });
         });
 

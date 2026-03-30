@@ -3,41 +3,57 @@ package forrealdatingapp.routes;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import forrealdatingapp.credentials.Credentials;
-import forrealdatingapp.dtos.User;
-import javafx.print.Collation;
+import forrealdatingapp.utilities.RouterUtils;
+import forrealdatingapp.utilities.TimeoutInterceptor;
 import okhttp3.*;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Queue;
+import java.util.concurrent.TimeUnit;
 
-import static forrealdatingapp.routes.RouterUtils.*;
+
+import static forrealdatingapp.utilities.RouterUtils.*;
 
 public class CredentialsRequests {
-    public static void credentialsRetrieve(String token) throws JsonProcessingException {
+    public static boolean credentialsRetrieve() throws JsonProcessingException {
 
-        OkHttpClient client = new OkHttpClient.Builder()
-                .connectTimeout(java.time.Duration.ofSeconds(10))
-                .readTimeout(java.time.Duration.ofSeconds(10))
-                .writeTimeout(java.time.Duration.ofSeconds(10))
+
+        OkHttpClient client = BASE_CLIENT.newBuilder()
+                .addInterceptor(new TimeoutInterceptor(30))
+                .connectionPool(new okhttp3.ConnectionPool(5, 5, TimeUnit.MINUTES)) // Standard pooling
                 .build();
 
         Request request = new Request.Builder()
-                .url("http://localhost:4000")
-                .addHeader("x-api-key", token)
+                //SECRET BACKEND NOT THE MAIN ONE
+                .url("https://datingappcredentials-latest.onrender.com/")
+                .addHeader("X-App-Signature", "JavaFX-Client-v1")
                 .build();
-        String resBody ="";
+
+
         try (Response response = client.newCall(request).execute()) {
-            assert response.body() != null;
-            resBody = response.body().string();
+            String resBody = null;
+
+            ResponseBody body = response.body();
+
+            if (body != null) {
+                resBody = body.string();
+            }
+            if (resBody == null || resBody.isBlank()) {
+//            System.out.println("Server returned empty body (probably sleeping)");
+                return false;
+            }
+
+//        System.out.println("resbody: " + resBody);
+
+            Credentials c = manageJSON().readValue(resBody, new TypeReference<Credentials>() {});
+
+            RouterUtils.getCredentials().setCloudinaryUrl(c.getCloudinaryUrl());
+            RouterUtils.getCredentials().setExpressUrl(c.getExpressUrl());
+            return true;
 
         } catch (IOException e) {
-
+            e.printStackTrace();
+            return false;
         }
-//        System.out.println(resBody);
-        Credentials c = manageJSON().readValue(resBody, new TypeReference<Credentials>() {});
-        RouterUtils.getCredentials().setCloudinaryUrl(c.getCloudinaryUrl());
-        RouterUtils.getCredentials().setExpressUrl(c.getExpressUrl());
-    }
-}
+
+
+    }}

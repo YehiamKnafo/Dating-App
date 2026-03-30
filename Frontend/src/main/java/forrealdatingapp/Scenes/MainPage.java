@@ -6,10 +6,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import forrealdatingapp.App;
-import forrealdatingapp.TokenManager;
 import forrealdatingapp.WebSocket;
 import forrealdatingapp.chatScenes.ChatZone;
 import forrealdatingapp.dtos.User;
@@ -36,6 +36,8 @@ import javafx.stage.Stage;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import static forrealdatingapp.utilities.RouterUtils.manageToken;
+
 public class MainPage {
 private User user;
 private static final ObjectMapper om = new ObjectMapper();
@@ -44,11 +46,19 @@ private static int page;
 private static boolean UsersDetectad;
 private static User next;
 private static Queue<User> users;
-    public void showMainPage(Stage stage, String _id) {
-        WebSocket.websocketio.INSTANCE.socketIoInstance.emit("RequestMatchStatus", _id);
+    public void showMainPage(Stage stage) {
+        // IN CASE THAT WAS HELPING
+        //        if (args != null && args.length > 0){
+        //            String token = args[0];
+        //            manageToken().saveToken(App.id, token);
+        //
+        //        }
+        // END
         page = 1;
-        user = UserProfileRequests.getMyProfile(_id);
+        user = UserProfileRequests.getMyProfile(App.id);
+
         socketUsernameAck();
+        WebSocket.websocketio.INSTANCE.socketIoInstance.emit("RequestMatchStatus", App.id);
         if (ChatZone.chatArea == null){
                 ChatZone.chatArea = new TextArea();
                 ChatZone.chatArea.setEditable(false);
@@ -59,9 +69,9 @@ private static Queue<User> users;
         String imgurl = "";
         
         // Label for text
-       
-        users = MatchingRequests.getUsers(_id, Integer.toString(page) );
-        System.out.println(users);
+//        System.out.println("appid: "+App.id);
+        users = MatchingRequests.getUsers(App.id, Integer.toString(page) );
+//        System.out.println(users);
         
         
         
@@ -69,7 +79,7 @@ private static Queue<User> users;
             UsersDetectad = true;
             // System.out.println("test");
             if((next = users.peek()) != null)
-                imgurl =  next.getPictures().get(0).replace('\\', '/');
+                imgurl =  next.getPictures().getFirst().replace('\\', '/');
         }
        
         // Label text = new Label("Image goes here");
@@ -100,8 +110,8 @@ private static Queue<User> users;
         picdiv.getChildren().add(imageView); // Add ImageView to picdiv
         StackPane.setAlignment(imageView, Pos.CENTER_LEFT);
         HBox userDetails = new HBox();
-        Button prevPic = new Button("Prev");
-        Button nextPic = new Button("Next");
+        Button prevPic = new Button("Previous Picture");
+        Button nextPic = new Button("Next Picture");
         DisplayUser(name, age, bio, users, imageView);
 
         prevPic.setOnAction((actionEvent) -> {
@@ -151,7 +161,7 @@ private static Queue<User> users;
                 ));
                 try {
                     String json = om.writeValueAsString(idMap);
-                    MatchingRequests.Dislike(json, _id);
+                    MatchingRequests.Dislike(json, App.id);
                     
                 } catch (Exception ex) {
                     System.out.println("error");
@@ -163,7 +173,7 @@ private static Queue<User> users;
             }
             else{
                 
-                users = MatchingRequests.getUsers(_id, Integer.toString(++page));
+                users = MatchingRequests.getUsers(App.id, Integer.toString(++page));
                 DisplayUser(name, age, bio, users, imageView);
                 
             }
@@ -177,7 +187,7 @@ private static Queue<User> users;
                 Map<String, String> likeMap = new HashMap<>(Map.of("_id", next.get_id()));
                 try {
                 //    MatchingRequests.like(om.writeValueAsString(likeMap), _id);
-                   Map<String, Boolean> res =  MatchingRequests.CheckMatch(om.writeValueAsString(likeMap), _id);
+                   Map<String, Boolean> res =  MatchingRequests.CheckMatch(om.writeValueAsString(likeMap), App.id);
                    if(res.get("match")){
                        //TODO: match effect                
                         Alert alert = new Alert(AlertType.CONFIRMATION);
@@ -186,7 +196,7 @@ private static Queue<User> users;
                         alert.setContentText("check your match box");
     
                         // Show the alert and wait for user response
-                        alert.showAndWait();
+                        alert.show();
                    }
                     
                 } catch (Exception ex) {
@@ -196,7 +206,7 @@ private static Queue<User> users;
                 DisplayUser(name, age, bio, users, imageView);
             }
             else{
-                users =  MatchingRequests.getUsers(_id, Integer.toString(++page));
+                users =  MatchingRequests.getUsers(App.id, Integer.toString(++page));
                 DisplayUser(name, age, bio, users, imageView);
 
             }
@@ -224,15 +234,16 @@ private static Queue<User> users;
         profileButton.setOnAction(e -> {
             ProfilePage profilePage = new ProfilePage();
             try {
-                profilePage.showProfilePage(stage, _id, user);
-            } catch (URISyntaxException e1) {
+                UserProfileRequests.getMyProfile(App.id);
+                profilePage.showProfilePage(stage, user);
+            } catch (Exception e1) {
                 // TODO Auto-generated catch block
                 e1.printStackTrace();
             }
         });
         matchesButton.setOnAction((actionEvent) -> {
             try {
-                App.matchesPage.showMatchesPage(stage, _id);
+                App.matchesPage.showMatchesPage(stage);
             } catch (IOException e1) {
                 // TODO Auto-generated catch block
                 e1.printStackTrace();
@@ -240,7 +251,7 @@ private static Queue<User> users;
         });
         preferrences.setOnAction((actionEvent) -> {
             PrefrencesWindow prefrencesWindow = new PrefrencesWindow();
-            prefrencesWindow.showPrefrencesWindow(stage, _id);
+            prefrencesWindow.showPrefrencesWindow(stage,user);
             
         });
         navBar.getChildren().addAll(profileButton, matchesButton,preferrences);
@@ -254,19 +265,19 @@ private static Queue<User> users;
         logout.setAlignment(Pos.CENTER);
         styleOtherButtons(logOutButton);
         logOutButton.setOnAction((actionEvent) -> {
-            stage.setWidth(500);
-            stage.setHeight(600);
+
             // if(ChatZone.messageCounters != null && !ChatZone.messageCounters.isEmpty()){
             //     UsersRouteRequests.UpdateCounter(_id);
             // }
-
-            WebSocket.websocketio.INSTANCE.socketIoInstance.disconnect();
-            TokenManager tm = new TokenManager();
-            tm.clearToken(_id);
+            App.clear();
             ChatZone.chatArea = null;
             ChatZone.isMessagesFetched.clear();
             LoginWindow loginWindow = new LoginWindow();
-            loginWindow.showLoginWindow(stage,null);
+            try {
+                loginWindow.showLoginWindow(stage);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
         });
         logout.getChildren().add(logOutButton);
 
@@ -281,8 +292,7 @@ private static Queue<User> users;
         Scene scene = new Scene(maindiv, 900, 800);  // Adjust window size
 
         stage.setScene(scene);
-        stage.setHeight(800);
-        stage.setWidth(900);
+
         stage.setTitle("Main Page");
         stage.show();
 //        ChatZone.writer.println("Broadcast|" + _id);

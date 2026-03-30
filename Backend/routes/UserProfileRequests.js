@@ -1,10 +1,13 @@
 const auth = require('../middlewares/jwtConfig');
-const {UserModel, validateProfileUpdate, validatePicture } = require('../models/usersModel');
+const {UserModel, validateProfileUpdate, validatePicture, validateDateOfBirth } = require('../models/usersModel');
 const { Message } = require("../models/MessageModel");
 const LikeModel = require('../models/LikeModel');
 const { MatchModel } = require('../models/MatchModel');
 const { DislikeModel } = require('../models/DislikeModel');
+const cloudinary = require('cloudinary').v2;
+const getPublicIdFromUrl = require('../cloudinaryApi/cloudinaryHelper');
 const router = require('express').Router();
+
 
 router.get('/', auth ,async (req, res) => {
   try {
@@ -45,6 +48,13 @@ router.put('/updateprofile/:id',auth, async (req, res) => {
 });
 
 router.patch("/updatePreferrences", auth, async (req, res) => {
+  const validationObject = {
+    birthDate: req.body.birthDate
+  }
+  const {error} = validateDateOfBirth(validationObject);
+  if (error) {
+      return res.status(400).json(error.details[0].message);
+}
   try {
     const updates = {};
     const { birthDate, age, gender, preferredGender, bio, minPreferredAge, maxPreferredAge, firstName, lastName } = req.body;
@@ -54,7 +64,7 @@ router.patch("/updatePreferrences", auth, async (req, res) => {
     if (age !== undefined && age > 17) updates.age = age;
     if (gender !== undefined) updates.gender = gender;
     if (preferredGender !== undefined) updates.preferredGender = preferredGender;
-    if (bio !== undefined && bio !== "") updates.bio = bio;
+    if (bio !== undefined) updates.bio = bio;
     if (minPreferredAge !== undefined) updates.minPreferredAge = minPreferredAge;
     if (maxPreferredAge !== undefined) updates.maxPreferredAge = maxPreferredAge;
     if (firstName !== undefined && firstName !== "") updates.firstName = firstName;
@@ -90,10 +100,12 @@ router.patch('/updateBio', auth, async (req, res) => {
   
 });
 router.put("/changeprofilepic", auth, async (req, res) => {
-    console.log(typeof req.body.url); // This should log 'string'
+    const url = req.query.url   
+    const obj  ={
+      url
+    } 
     
-    
-    const { error } = validatePicture(req.body.url);
+    const { error } = validatePicture(obj);
     if (error) {
       console.log(error);
       
@@ -103,7 +115,7 @@ router.put("/changeprofilepic", auth, async (req, res) => {
     try {
       await UserModel.updateOne(
         {_id: req.tokenData._id},
-        {$set:{profilePicture: req.body.url}}
+        {$set:{profilePicture: url}}
       );
       return res.sendStatus(200);
       
@@ -116,10 +128,45 @@ router.put("/changeprofilepic", auth, async (req, res) => {
     }
 
 });
+router.delete("/deletepicture", auth, async(req, res)=>{
+  const myId = req.tokenData._id;
+  const urlToDelete = req.query.url;
+  const obj = {
+    url: urlToDelete
+  }
+  const { error } = validatePicture(obj);
+    if (error) {
+      console.log(error);
+      
+      return res.status(403).json({err: error.details[0].message});
+      
+    }
+    try {
+      await UserModel.findByIdAndUpdate(myId,
+        {$pull:{pictures: urlToDelete}}
+      );
+      return res.sendStatus(200);
+    } catch (error) {
+      console.log(error);
+      
+      return res.sendStatus(500);
+      
+    }
+
+});
 router.delete("/deleteUser", auth, async (req, res) => {
   try {
     const myId = req.tokenData._id;
-
+    const profile = await UserModel.findOne({_id: myId});
+    console.log(profile);
+    
+    const pictureList = profile.pictures;
+    const profilePic = profile.profilePicture;
+    const allPics = [...new Set([...pictureList, profilePic].filter(Boolean))]; 
+    allPics.forEach(async (url) => {
+      const publicId = getPublicIdFromUrl(url);
+      if (publicId) await cloudinary.uploader.destroy(publicId);
+    });   
     // 1. Clean up all associated data first
     await Promise.all([
       Message.deleteMany({ $or: [{ senderID: myId }, { receiverID: myId }] }),
@@ -137,7 +184,8 @@ router.delete("/deleteUser", auth, async (req, res) => {
 
     return res.status(200).json({
       status: true,
-      message: "Account and all associated data wiped successfully"
+      message: "Account and all associated data wiped successfully",
+      
     });
 
   } catch (error) {

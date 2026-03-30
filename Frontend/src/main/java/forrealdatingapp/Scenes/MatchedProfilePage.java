@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import forrealdatingapp.App;
 import forrealdatingapp.dtos.User;
 import forrealdatingapp.routes.MatchingRequests;
 import forrealdatingapp.utilities.ImageUtils;
@@ -26,11 +27,11 @@ import javafx.stage.Stage;
 public class MatchedProfilePage {
     private int count = 0;
 
-    public void showMatchedProfilePage(Stage stage, String _id, String matchID) throws URISyntaxException{
+    public void showMatchedProfilePage(Stage stage, String matchID) throws URISyntaxException{
         File file;
         Map<String, Object> jsonMap = new HashMap<>();
         jsonMap.put("matchID", matchID);
-        User matchedUserDetails = MatchingRequests.getMatchedProfile(_id, jsonMap);
+        User matchedUserDetails = MatchingRequests.getMatchedProfile(App.id, jsonMap);
         List<String> pics = matchedUserDetails.getPictures();
         VBox layout = new VBox();
         layout.setPadding(new Insets(15));
@@ -96,9 +97,17 @@ public class MatchedProfilePage {
 
         contentDetails.getChildren().addAll(name, age);
         contentDetails.setAlignment(Pos.CENTER);
-        
-        layout.getChildren().addAll(imageControl,contentDetails);
-        Scene scene = new Scene(layout, 700, 700);
+        Button backToMatchesScreen = new Button("Back to matches page");
+        backToMatchesScreen.setOnAction((e)->{
+            MatchesPage matchesPage = new MatchesPage();
+            try {
+                matchesPage.showMatchesPage(stage);
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
+        layout.getChildren().addAll(imageControl,contentDetails, backToMatchesScreen);
+        Scene scene = new Scene(layout, 900, 800);
         stage.setScene(scene);
         
     }

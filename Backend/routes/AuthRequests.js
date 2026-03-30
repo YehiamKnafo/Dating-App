@@ -1,12 +1,38 @@
 const { OtpModel, OtpValidation } = require('../models/OtpModel');
 const { UserModel, validateSignup, createToken, validateLogin } = require('../models/usersModel');
-const sendOtp = require('../NodemailerConfig.js');
+const sendOtp = require('../emailApi/BrevoConfig');
 const router = require('express').Router();
 const bcrypt = require('bcrypt');
+const Redis = require('ioredis');
+const { REDIS_URL } = require('../secret/secretConf');
+const redis = /** @type {import('ioredis').Redis} */ (new Redis(REDIS_URL));
+// async function testConnection() {
+//     try {
+//         console.log("1. Attempting to Ping Redis...");
+//         const pong = await redis.ping();
+//         console.log("Result:", pong); // Should say 'PONG'
+
+//         console.log("2. Attempting a Manual Set...");
+//         await redis.set('test_key', 'it_works', 'EX', 10);
+
+//         console.log("3. Attempting a Manual Get...");
+//         const value = await redis.get('test_key');
+//         console.log("Result:", value); // Should say 'it_works'
+
+//     } catch (err) {
+//         console.error("TEST FAILED:", err.message);
+//     } finally {
+//         process.exit();
+//     }
+// }
+
+// testConnection();
 router.post("/", async (req, res) => {
     let { error } = validateSignup(req.body);
     
     if (error) {
+      console.log(error);
+      
       return res.status(400).json(error.details[0].message);
     }
     try {
@@ -20,7 +46,7 @@ router.post("/", async (req, res) => {
     }
     catch (err) {
       if (err.code == 11000) {
-        return res.status(500).json({ msg: "Email already in system, try log in", code: 11000 })
+        return res.status(500).json({ msg: "Email or username already in system, try log in", code: 11000 })
   
       }
       console.log(err);
@@ -79,35 +105,71 @@ router.post("/", async (req, res) => {
   
 // Route to send OTP
 router.post('/send-otp', async (req, res) => {
-    const { email, type } = req.body;
   
+  
+    console.log(REDIS_URL);
+    
+    // console.log("in the right route");
+    // console.log(req.body);
+    
+    const { email, type } = req.body;
+
     if (!email) {
       return res.status(400).send('Email is required');
     }
+    const cooldownKey = `otp_limit:${email}`;
+    console.log(cooldownKey);
+    
+
     try {
+    const isBlocked = await redis.get(cooldownKey);
+    console.log("isBlocked: " + isBlocked);
+    
+    if (isBlocked !== null) {
+      const ttl = await redis.ttl(cooldownKey);
+      console.log(`Please wait ${ttl} seconds before requesting a new code.`);
+      return res.status(429).json({sec: ttl,msg:`Please wait ${ttl} seconds.`});
+      
+    }
       let otpObj;
       let otpStorage = {
         email: email
       }; 
       let otp;
       let db = await UserModel.findOne({email: email});
+      // console.log("db-check");
+      
+      // console.log(db);
+      
       if(type == "reset-otp"){
-        if(!db) return res.status(404).send('account is not exist');
+        if(!db) {
+          return res.status(404).json({msg:'account is not exist'});
+        }
         otp = await sendOtp(email); 
         otpStorage.otp = otp;
         otpObj = new OtpModel(otpStorage);
         await otpObj.save();
+        otpStorage = {};
      
       }
       else if(type == "signup-otp"){
   
-        if(db) return res.status(403).send('email exist');
+        if(db){
+         return res.status(403).json({msg:'email exist'});
+        }  
         otp = await sendOtp(email); 
         otpStorage.otp = otp; // Save OTP for verification
         otpObj = new OtpModel(otpStorage);
         await otpObj.save();
+        otpStorage = {};
       }
-      return res.status(200).send('valid');
+      await redis.set(cooldownKey, 'locked', 'EX', 120);
+
+// IMMEDIATELY check if it exists
+          
+      const verify = await redis.get(cooldownKey);
+      console.log("Verification check immediately after set:", verify);
+      return res.status(200).json({msg:'valid'});
     } catch (error) {
       return res.status(500).send('Failed to send OTP');
     }
@@ -143,6 +205,17 @@ router.post('/send-otp', async (req, res) => {
     }
     
  
+  });
+  router.post('/dropOtp' ,async(req, res)=>{
+    const email = req.body.email;
+    if (email) {
+      const existed = await OtpModel.findOneAndDelete({ email });
+      if (existed) {
+        return res.sendStatus(200);
+        
+      }
+    }
+    return res.sendStatus(500);
   });
   router.put('/resetpassword', async(req, res)=>{
     const newPassword = req.body.password;

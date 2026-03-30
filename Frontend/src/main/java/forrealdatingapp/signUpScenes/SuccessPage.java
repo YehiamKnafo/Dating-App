@@ -1,4 +1,5 @@
 package forrealdatingapp.signUpScenes;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import forrealdatingapp.Scenes.LoginWindow;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -26,14 +27,18 @@ public class SuccessPage {
             // Logic to navigate back to the login screen
             // Replace with your actual navigation logic
             LoginWindow loginWindow = new LoginWindow();
-            loginWindow.showLoginWindow(stage,null);
+            try {
+                loginWindow.showLoginWindow(stage);
+            } catch (JsonProcessingException ex) {
+                throw new RuntimeException(ex);
+            }
         });
 
         // Add elements to the layout
         root.getChildren().addAll(successLabel, backToLoginButton);
 
         // Set the scene and stage
-        Scene scene = new Scene(root, 500, 600);
+        Scene scene = new Scene(root, 600, 800);
         stage.setScene(scene);
         stage.setTitle("Success");
         stage.show();

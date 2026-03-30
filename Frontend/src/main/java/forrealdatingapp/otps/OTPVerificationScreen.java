@@ -2,6 +2,7 @@ package forrealdatingapp.otps;
 
 import forrealdatingapp.App;
 import forrealdatingapp.dtos.User;
+import forrealdatingapp.mangers.UnloggedUserManager;
 import forrealdatingapp.routes.AuthRequests;
 import forrealdatingapp.signUpScenes.UserDetails;
 import javafx.scene.Scene;
@@ -28,9 +29,9 @@ public class OTPVerificationScreen{
             String email = user.getEmail(); // You should store this value from the previous screen
             boolean valid = AuthRequests.verifyOtpRequest(email, otp);
             if(valid) {
-                System.out.println("move to the next screen -- UserDetails");
+//                System.out.println("move to the next screen -- UserDetails");
                 UserDetails userDetails =  new UserDetails();
-                userDetails.showUserDetails(stage, user);
+//                userDetails.showUserDetails(stage, user);
 
 
         }
@@ -39,10 +40,10 @@ public class OTPVerificationScreen{
         });
 
         root.getChildren().addAll(otpField, verifyOtpButton);
-        App.BackToLoginBtn(root, stage);
-
-        Scene scene = new Scene(root, 500, 600);
-        stage.setTitle("Verify OTP");
+        App.BackToLoginBtn(root, stage, user);
+        UnloggedUserManager.setUser(user);
+        Scene scene = new Scene(root, 600, 800);
+        stage.setTitle("Verify");
         stage.setScene(scene);
         stage.show();
     }
@@ -51,7 +52,7 @@ public class OTPVerificationScreen{
         Alert alert = new Alert(alertType);
         alert.setTitle(title);
         alert.setContentText(message);
-        alert.showAndWait();
+        alert.show();
     }
 
     

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import forrealdatingapp.App;
 import forrealdatingapp.dtos.User;
+import forrealdatingapp.mangers.UnloggedUserManager;
 import forrealdatingapp.routes.AuthRequests;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -19,8 +20,10 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.util.Map;
+
 public class PasswordStage  {
-    public void showPasswordStage(Stage stage, User user)  {
+    public void showPasswordStage(Stage stage)  {
         // Create the main layout
         VBox root = new VBox(15);
         root.setPadding(new Insets(20));
@@ -30,7 +33,7 @@ public class PasswordStage  {
 
         // Password field and visibility toggle
         PasswordField passwordField = new PasswordField();
-        passwordField.setPromptText("Password");
+        passwordField.setPromptText("enter your password here");
         TextField visiblePasswordField = new TextField(); // For showing the password in plain text
         visiblePasswordField.setManaged(false); // Not visible by default
         visiblePasswordField.setVisible(false);
@@ -58,34 +61,39 @@ public class PasswordStage  {
 
         // Add password field and button to a horizontal layout
         HBox passwordBox = new HBox(10, passwordField, visiblePasswordField, toggleVisibilityButton);
-
         // Submit button
         Button submitButton = new Button("Submit");
         submitButton.setOnAction(e -> {
             String password = passwordField.getText();
 
-            if (password.isEmpty()) {
+            if (password.isBlank()) {
                 Alert alert = new Alert(Alert.AlertType.ERROR, "Password cannot be empty.", ButtonType.OK);
-                alert.showAndWait();
+                alert.show();
             } else {
                 // Set the password in the user object (you can handle hashing later)
-                user.setPassword(password);
+                UnloggedUserManager.getUser().setPassword(password);
                 try {
                     ObjectMapper om = new ObjectMapper();
-                    String json = om.writeValueAsString(user);
-                    boolean ok = AuthRequests.postSignup(json);
-                    if(!ok){
-                        Alert alert = new Alert(Alert.AlertType.ERROR, "cannot create account!", ButtonType.CLOSE);
-                        alert.showAndWait();
+                    String json = om.writeValueAsString(UnloggedUserManager.getUser());
+                    Map<String,Object> returnMap = AuthRequests.postSignup(json);
+
+                    if(!(Boolean) returnMap.get("bool")){
+                        Alert alert = new Alert(Alert.AlertType.ERROR, (String) returnMap.get("body"), ButtonType.CLOSE);
+                        alert.show();
                     }
                     else{
                         Alert alert = new Alert(Alert.AlertType.INFORMATION, "Password saved successfully!", ButtonType.OK);
-                        alert.showAndWait();
-        
+                        alert.show();
+                        UserDetails.uploadedPictures = null;
+                        if (UnloggedUserManager.getUser() != null && UnloggedUserManager.getUser().getEmail() != null){
+                            boolean ok = AuthRequests.dropOtp(UnloggedUserManager.getUser().getEmail());
+                            if (ok) System.out.println("otp dropped");
+                        }
+                        UnloggedUserManager.setUser(null);
                         // Optionally move to the next stage
-                        
                         SuccessPage sp = new SuccessPage();
                         sp.showSuccessPage(stage);
+
                     }
 
                     
@@ -105,7 +113,7 @@ public class PasswordStage  {
         App.BackToLoginBtn(root, stage);
 
         // Set up the scene and stage
-        Scene scene = new Scene(root, 500, 600);
+        Scene scene = new Scene(root, 600, 800);
         stage.setScene(scene);
         stage.setTitle("Set Password");
         stage.show();

@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import forrealdatingapp.App;
 import forrealdatingapp.Scenes.LoginWindow;
 import forrealdatingapp.Scenes.MainPage;
 import forrealdatingapp.Scenes.MatchesPage;
@@ -48,7 +49,6 @@ public class ChatZone {
         public static Socket socket;
         public static BufferedReader reader;
         public static PrintWriter writer;
-        private static String userId;
         public static String matchId;
         public static boolean inChatZoneScreen = false;
         private static  String finalMessage;
@@ -63,25 +63,25 @@ public class ChatZone {
         private final static Duration TYPING_DELAY = Duration.seconds(1); // 1 second pause
                                 
                                     
-        public void showChatZone(Stage stage, MatchesPage.Match match, String _userId) {
-            
+        public void showChatZone(Stage stage, MatchesPage.Match match) {
             messageCounters.put(matchId, 0);
             matchId = match.getId();
-            userId = _userId;
-            // messageCounters.get(matchId) 
+            MessagesMap.put(matchId, chatArea);
+            // messageCounters.get(matchId)
             
             // UI Components
             
             chatArea = new TextArea();
             chatArea.setEditable(false);
             chatArea.setWrapText(true);
+
             
             if(isMessagesFetched.get(matchId) == null){
                 // System.out.println(userId);
                 // System.out.println(matchId);
-                List<Map<String, Object>> messages = MessageRequests.FetchMessages(userId, matchId);
+                List<Map<String, Object>> messages = MessageRequests.FetchMessages(App.id, matchId);
                 if(messages != null){
-                    User currentUser = UserProfileRequests.getMyProfile(_userId);
+                    User currentUser = UserProfileRequests.getMyProfile(App.id);
                     StringBuilder chatContent = new StringBuilder();
                     String sender;
                     for (Map<String, Object> message : messages) {
@@ -142,14 +142,13 @@ public class ChatZone {
     
             Button backToMatchScreen = new Button("back to matches screen");
             backToMatchScreen.setOnAction((actionEvent) -> {
-                MessageRequests.ResetMessageCounter(_userId, match.getId());
-                MessagesMap.put(matchId, chatArea);
+                MessageRequests.ResetMessageCounter(App.id, match.getId());
                 inChatZoneScreen = false;
                 messageCounters.put(matchId, 0);
                 MatchesPage.MessageCounterMap.get(match.getId()).setText("");
                 MatchesPage mp = new MatchesPage();
                 try {
-                    mp.showMatchesPage(stage, _userId);
+                    mp.showMatchesPage(stage);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -163,7 +162,7 @@ public class ChatZone {
             layout.setCenter(chatArea);
             layout.setBottom(inputBox);
             layout.setTop(Top);
-            Scene scene = new Scene(layout, 400, 500);
+            Scene scene = new Scene(layout, 900, 800);
             scene.setOnKeyPressed ((keyEvent) -> {
                 if(keyEvent.getCode() == KeyCode.ENTER){
                     try {
@@ -182,97 +181,97 @@ public class ChatZone {
             
         }
     
-        public static void connectToServer() {
-            String socket_host = "";
-            int socket_port = 1111;
-            try {
-                if (socket == null ||socket.isClosed()) {
-                    
-                    socket = new Socket(socket_host, socket_port); // Replace with actual server details
-                    reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                    writer = new PrintWriter(socket.getOutputStream(), true);
-                    
-                }
-                // Start a thread to listen for incoming messages
-                    
-                    if (listenerThread == null || !listenerThread.isAlive()) {
-                    listenerThread = new Thread(ChatZone::listenForMessages);
-                    listenerThread.setDaemon(true); // Optional: ensures it stops when the app closes
-                    listenerThread.start();
-                }
-                // Send initial message to identify user
+//        public static void connectToServer() {
+//            String socket_host = "";
+//            int socket_port = 1111;
+//            try {
+//                if (socket == null ||socket.isClosed()) {
+//
+//                    socket = new Socket(socket_host, socket_port); // Replace with actual server details
+//                    reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+//                    writer = new PrintWriter(socket.getOutputStream(), true);
+//
+//                }
+//                // Start a thread to listen for incoming messages
+//
+//                    if (listenerThread == null || !listenerThread.isAlive()) {
+//                    listenerThread = new Thread(ChatZone::listenForMessages);
+//                    listenerThread.setDaemon(true); // Optional: ensures it stops when the app closes
+//                    listenerThread.start();
+//                }
+//                // Send initial message to identify user
+//
+//                System.out.println("thread test: " + listenerThread);
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//                chatArea.appendText("Failed to connect to chat server.\n");
+//            }
+//        }
     
-                System.out.println("thread test: " + listenerThread);
-            } catch (IOException e) {
-                e.printStackTrace();
-                chatArea.appendText("Failed to connect to chat server.\n");
-            }
-        }
-    
-        private static void listenForMessages() {
-            System.out.println("new thread");
-            try {
-                String message;
-                while ((message = reader.readLine()) != null) {
-                    finalMessage = message; // Effectively final
-                    System.out.println(finalMessage);
-//                    if (finalMessage.contains("MatchesPageStatus|")){
-//                        String id = finalMessage.split("\\|")[1].trim();
-//                        String type = finalMessage.split("\\|")[2].trim();
-//                        // System.out.println(id + "\n" + type);
-//                        MatchesPage.setUserStatus();
+//        private static void listenForMessages() {
+//            System.out.println("new thread");
+//            try {
+//                String message;
+//                while ((message = reader.readLine()) != null) {
+//                    finalMessage = message; // Effectively final
+//                    System.out.println(finalMessage);
+////                    if (finalMessage.contains("MatchesPageStatus|")){
+////                        String id = finalMessage.split("\\|")[1].trim();
+////                        String type = finalMessage.split("\\|")[2].trim();
+////                        // System.out.println(id + "\n" + type);
+////                        MatchesPage.setUserStatus();
+////                    }
+//                    if (finalMessage.equals("Unallowed")) {
+//                        System.out.println("test-unallowed");
+//                        LoginWindow.SocketLogin("Unallowed");
+//
+//
 //                    }
-                    if (finalMessage.equals("Unallowed")) {
-                        System.out.println("test-unallowed");
-                        LoginWindow.SocketLogin("Unallowed");
-                        
-                        
-                    }
-                    else if(finalMessage.contains("Allowed|")){
-                        LoginWindow.SocketLogin("allowed");
-    
-                    }
-                    if (finalMessage.contains("Unmatched|")){
-                        String userid = finalMessage.split("userid:")[1].trim();
-                        MatchesPage.cleanCurrentUnmatch();
-                    }
-                    if (finalMessage.contains("MessageRecieved|")){
-                        String username = finalMessage.split("\\|")[1];
-                        String content = finalMessage.split("\\|")[2];
-                        String usernameID = finalMessage.split("\\|")[3];
-                        Platform.runLater(()->{
-                            chatArea.appendText(username + "|" + content + "\n");
-    
-                        });
-                        System.out.println("inChatZoneScreen:"+inChatZoneScreen);
-                        if(!inChatZoneScreen){
-                            messageCounters.put(usernameID, messageCounters.getOrDefault(usernameID, 0) + 1);
-                            MatchesPage.pushUserMsgToTop(usernameID);
-                        }
-                        else messageCounters.remove(usernameID);
-                        MatchesPage.showLastMessage(usernameID, content,username);
-                        // if(messageCounters.get(usernameID) == null){
-                        //     messageCounters.put(usernameID, 0);
-    
-                        // }
-                        // else{
-                        //     messageCounters.put(usernameID, messageCounters.get(usernameID) + 1);
-                        // }
-                    }
-    
-            }
-            System.out.println("end-while-test");
-        }
-        catch (IOException e) {
-//            closeConnection();
-            e.printStackTrace();
-        }
-    }
+//                    else if(finalMessage.contains("Allowed|")){
+//                        LoginWindow.SocketLogin("allowed");
+//
+//                    }
+//                    if (finalMessage.contains("Unmatched|")){
+//                        String userid = finalMessage.split("userid:")[1].trim();
+//                        MatchesPage.cleanCurrentUnmatch();
+//                    }
+//                    if (finalMessage.contains("MessageRecieved|")){
+//                        String username = finalMessage.split("\\|")[1];
+//                        String content = finalMessage.split("\\|")[2];
+//                        String usernameID = finalMessage.split("\\|")[3];
+//                        Platform.runLater(()->{
+//                            chatArea.appendText(username + "|" + content + "\n");
+//
+//                        });
+//                        System.out.println("inChatZoneScreen:"+inChatZoneScreen);
+//                        if(!inChatZoneScreen){
+//                            messageCounters.put(usernameID, messageCounters.getOrDefault(usernameID, 0) + 1);
+//                            MatchesPage.pushUserMsgToTop(usernameID);
+//                        }
+//                        else messageCounters.remove(usernameID);
+//                        MatchesPage.showLastMessage(usernameID, content,username);
+//                        // if(messageCounters.get(usernameID) == null){
+//                        //     messageCounters.put(usernameID, 0);
+//
+//                        // }
+//                        // else{
+//                        //     messageCounters.put(usernameID, messageCounters.get(usernameID) + 1);
+//                        // }
+//                    }
+//
+//            }
+//            System.out.println("end-while-test");
+//        }
+//        catch (IOException e) {
+////            closeConnection();
+//            e.printStackTrace();
+//        }
+//    }
     
         private void sendMessage() throws InterruptedException {
             String message = messageInput.getText().trim();
             MatchesPage.lastMessageTxtMap.clear();
-            MatchesPage.lastMessageTxtMap.put(userId, message);
+            MatchesPage.lastMessageTxtMap.put(App.id, message);
             chatArea.appendText("Me|" + message + "\n");
             if(MatchesPage.lastMessageMap.get(matchId) != null){
                 MatchesPage.lastMessageMap.get(matchId).setText("me: " + message);
@@ -403,8 +402,8 @@ public class ChatZone {
                     MatchesPage.lastMessageMap.get(finalSenderID).setText(finalSenderUsername + " "+ MatchesPage.lastMessageTxtMap.get(finalSenderID));
                 }
                 else {
-                    if(MatchesPage.lastMessageTxtMap.get(userId) != null)
-                        MatchesPage.lastMessageMap.get(finalSenderID).setText("me: " + MatchesPage.lastMessageTxtMap.get(userId));
+                    if(MatchesPage.lastMessageTxtMap.get(App.id) != null)
+                        MatchesPage.lastMessageMap.get(finalSenderID).setText("me: " + MatchesPage.lastMessageTxtMap.get(App.id));
                     else {
                         MatchesPage.lastMessageMap.get(finalSenderID).setText("");
                     }

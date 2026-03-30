@@ -1,5 +1,6 @@
 package forrealdatingapp.routes;
 
+import forrealdatingapp.utilities.TimeoutInterceptor;
 import okhttp3.*;
 
 import java.io.IOException;
@@ -14,27 +15,21 @@ import com.fasterxml.jackson.core.type.TypeReference;
 
 import forrealdatingapp.dtos.User;
 
-import static forrealdatingapp.routes.RouterUtils.getHost;
-import static forrealdatingapp.routes.RouterUtils.manageJSON;
-import static forrealdatingapp.routes.RouterUtils.manageToken;
+import static forrealdatingapp.utilities.RouterUtils.*;
 
 public class MatchingRequests {
     public static Queue<User> getUsers() {
-        OkHttpClient client = new OkHttpClient.Builder()
-                .connectTimeout(java.time.Duration.ofSeconds(10))
-                .readTimeout(java.time.Duration.ofSeconds(10))
-                .writeTimeout(java.time.Duration.ofSeconds(10))
-                .build();
+
 
         Request request = new Request.Builder()
                 .url(getHost() + "matches")
                 .addHeader("x-api-key", "example")
                 .build();
 
-        try (Response response = client.newCall(request).execute()) {
+        try (Response response = BASE_CLIENT.newCall(request).execute()) {
             Queue<User> users = manageJSON().readValue(response.body().string(), new TypeReference<Queue<User>>() {
             });
-            System.out.println(users);
+//            System.out.println(users);
             return users;
         } catch (IOException e) {
             return null;
@@ -42,14 +37,13 @@ public class MatchingRequests {
     }
 
     public static Queue<User> getUsers(String _id,String page) {
+//        System.out.println(manageToken().getToken(_id));
         // Create the query string
         String queryString = (page != null) ? "?page=" + URLEncoder.encode(page, StandardCharsets.UTF_8) : "";
         String url = getHost() + "matches/querygetmatches" + queryString;
 
-        OkHttpClient client = new OkHttpClient.Builder()
-                .connectTimeout(java.time.Duration.ofSeconds(10))
-                .readTimeout(java.time.Duration.ofSeconds(10))
-                .writeTimeout(java.time.Duration.ofSeconds(10))
+        OkHttpClient client = BASE_CLIENT.newBuilder()
+                .addInterceptor(new TimeoutInterceptor(30))
                 .build();
 
         Request request = new Request.Builder()
@@ -60,7 +54,7 @@ public class MatchingRequests {
         try (Response response = client.newCall(request).execute()) {
             String responseBody = response.body().string();
             // Debugging output
-            System.out.println(responseBody);
+//            System.out.println(responseBody);
 
             // Parse JSON response into Queue<User>
             return manageJSON().readValue(responseBody, new TypeReference<Queue<User>>() {});
@@ -69,12 +63,11 @@ public class MatchingRequests {
         }
     }
 public static void Dislike(String json, String _id) {
+        OkHttpClient client = BASE_CLIENT.newBuilder()
+            .addInterceptor(new TimeoutInterceptor(30))
+            .build();
         try {
-            OkHttpClient client = new OkHttpClient.Builder()
-                    .connectTimeout(java.time.Duration.ofSeconds(10))
-                    .readTimeout(java.time.Duration.ofSeconds(10))
-                    .writeTimeout(java.time.Duration.ofSeconds(10))
-                    .build();
+
 
             RequestBody body = RequestBody.create(
                     json,
@@ -89,19 +82,18 @@ public static void Dislike(String json, String _id) {
 
             try (Response response = client.newCall(request).execute()) {
                 System.out.println("response code: " + response.code());
-                System.out.println("response Body: " + response.body().string());
+//                System.out.println("response Body: " + response.body().string());
             }
         } catch (IOException e) {
             System.out.println(e.getLocalizedMessage());
         }
     }
     public static Map<String, Boolean> CheckMatch(String json,String _id) {
+        OkHttpClient client = BASE_CLIENT.newBuilder()
+                .addInterceptor(new TimeoutInterceptor(30))
+                .build();
         try {
-            OkHttpClient client = new OkHttpClient.Builder()
-                    .connectTimeout(java.time.Duration.ofSeconds(10))
-                    .readTimeout(java.time.Duration.ofSeconds(10))
-                    .writeTimeout(java.time.Duration.ofSeconds(10))
-                    .build();
+
 
             RequestBody body = RequestBody.create(
                     json,
@@ -117,7 +109,7 @@ public static void Dislike(String json, String _id) {
             try (Response response = client.newCall(request).execute()) {
                 System.out.println("response code: " + response.code());
                 String responseBody = response.body().string();
-                System.out.println("response Body: " + responseBody);
+//                System.out.println("response Body: " + responseBody);
                 return manageJSON().readValue(responseBody, new TypeReference<Map<String, Boolean>>() {});
             }
         } catch (IOException e) {
@@ -125,33 +117,6 @@ public static void Dislike(String json, String _id) {
         }
     }
 
-    public static void like(String json,String _id) {
-        try {
-            OkHttpClient client = new OkHttpClient.Builder()
-                    .connectTimeout(java.time.Duration.ofSeconds(10))
-                    .readTimeout(java.time.Duration.ofSeconds(10))
-                    .writeTimeout(java.time.Duration.ofSeconds(10))
-                    .build();
-
-            RequestBody body = RequestBody.create(
-                    json,
-                    MediaType.parse("application/json; charset=utf-8")
-            );
-
-            Request request = new Request.Builder()
-                    .url(getHost() + "matches/like")
-                    .addHeader("x-api-key", manageToken().getToken(_id))
-                    .post(body)
-                    .build();
-
-            try (Response response = client.newCall(request).execute()) {
-                System.out.println("response code: " + response.code());
-                System.out.println("response Body: " + response.body().string());
-            }
-        } catch (IOException e) {
-            System.out.println(e.getLocalizedMessage());
-        }
-    }
 
     public static List<User> getMatches(String page, String _id) {
         StringBuilder queryParams = new StringBuilder("?");
@@ -164,13 +129,11 @@ public static void Dislike(String json, String _id) {
         } else {
             queryParams.setLength(0); // No params provided, avoid sending "?"
         }
-
+        OkHttpClient client = BASE_CLIENT.newBuilder()
+                .addInterceptor(new TimeoutInterceptor(30))
+                .build();
         try {
-            OkHttpClient client = new OkHttpClient.Builder()
-                    .connectTimeout(java.time.Duration.ofSeconds(10))
-                    .readTimeout(java.time.Duration.ofSeconds(10))
-                    .writeTimeout(java.time.Duration.ofSeconds(10))
-                    .build();
+
 
             Request request = new Request.Builder()
                     .url(getHost() + "matches/getmatches" + queryParams)
@@ -190,14 +153,13 @@ public static void Dislike(String json, String _id) {
 
     public static boolean Unmatch(String _id, String _matchId) {
         Map<String, String> reqBodyMap = new HashMap<>(Map.of("_matchId", _matchId));
+        OkHttpClient client = BASE_CLIENT.newBuilder()
+                .addInterceptor(new TimeoutInterceptor(30))
+                .build();
         try {
             String reqBody = manageJSON().writeValueAsString(reqBodyMap);
 
-            OkHttpClient client = new OkHttpClient.Builder()
-                    .connectTimeout(java.time.Duration.ofSeconds(10))
-                    .readTimeout(java.time.Duration.ofSeconds(10))
-                    .writeTimeout(java.time.Duration.ofSeconds(10))
-                    .build();
+
 
             RequestBody body = RequestBody.create(
                     reqBody,
@@ -213,7 +175,7 @@ public static void Dislike(String json, String _id) {
             try (Response response = client.newCall(request).execute()) {
                 System.out.println("response code: " + response.code());
                 String responseBody = response.body().string();
-                System.out.println("response Body: " + responseBody);
+//                System.out.println("response Body: " + responseBody);
                 Map<String, Object> resbody = manageJSON().readValue(responseBody, new TypeReference<Map<String, Object>>(){});
                 if (resbody.containsKey("approved"))
                     return (boolean)resbody.get("approved");
@@ -225,14 +187,13 @@ public static void Dislike(String json, String _id) {
         }
     }
 public static User getMatchedProfile(String _id, Map<String, Object> jsonMap){
+        OkHttpClient client = BASE_CLIENT.newBuilder()
+            .addInterceptor(new TimeoutInterceptor(30))
+            .build();
         try {
             String json = manageJSON().writeValueAsString(jsonMap);
 
-            OkHttpClient client = new OkHttpClient.Builder()
-                    .connectTimeout(java.time.Duration.ofSeconds(10))
-                    .readTimeout(java.time.Duration.ofSeconds(10))
-                    .writeTimeout(java.time.Duration.ofSeconds(10))
-                    .build();
+
 
             RequestBody body = RequestBody.create(
                     json,

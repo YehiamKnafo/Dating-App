@@ -2,6 +2,7 @@ package forrealdatingapp.otps;
 
 import forrealdatingapp.App;
 import forrealdatingapp.dtos.User;
+import forrealdatingapp.mangers.UnloggedUserManager;
 import forrealdatingapp.passwordReset.ChoosePassword;
 import forrealdatingapp.routes.AuthRequests;
 import javafx.scene.Scene;
@@ -24,31 +25,21 @@ public class OTPVerificationScreenReset{
 
         Button verifyOtpButton = new Button("Verify OTP");
 
-        verifyOtpButton.setOnAction(event -> {
-            String otp = otpField.getText();
-            String email = user.getEmail(); // You should store this value from the previous screen
-            boolean valid = AuthRequests.verifyOtpRequest(email, otp);
-            if(valid) {
-                ChoosePassword ChoosePassword = new ChoosePassword();
-                ChoosePassword.showChoosePassword(stage, user);
-                
-                // LoginWindow lg = new LoginWindow();                
+
+                // LoginWindow lg = new LoginWindow();
                 // lg.showLoginWindow(stage, null);
                 // LoginWindow.error.setTextFill(Color.GREEN);
                 // LoginWindow.error.setText("Password been reset successfully");
 
 
 
-        }
-            else showAlert("Error", "Please enter a valid otp", AlertType.ERROR);
 
-        });
-
+        UnloggedUserManager.setUser(user);
         root.getChildren().addAll(otpField, verifyOtpButton);
-        App.BackToLoginBtn(root, stage);
+        App.BackToLoginBtn(root, stage, user);
 
         Scene scene = new Scene(root, 500, 600);
-        stage.setTitle("Verify OTP");
+        stage.setTitle("Reset");
         stage.setScene(scene);
         stage.show();
     }
@@ -57,7 +48,7 @@ public class OTPVerificationScreenReset{
         Alert alert = new Alert(alertType);
         alert.setTitle(title);
         alert.setContentText(message);
-        alert.showAndWait();
+        alert.show();
     }
 
     

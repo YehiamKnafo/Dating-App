@@ -1,27 +1,39 @@
 package forrealdatingapp.signUpScenes;
 import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import forrealdatingapp.App;
 import forrealdatingapp.dtos.User;
+import forrealdatingapp.mangers.UnloggedUserManager;
 import forrealdatingapp.utilities.CloudinaryUtils;
+import forrealdatingapp.utilities.ImageUtils;
+import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.Background;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import org.kordamp.ikonli.javafx.FontIcon;
+
+import static forrealdatingapp.App.progressIndicator;
+import static forrealdatingapp.App.serverStatusIndicator;
+
 
 public class UserDetails {
-
-    public void showUserDetails(Stage stage, User user) {
+    public static List<String> uploadedPictures;
+    public void showUserDetails(Stage stage) {
         // Create a VBox for the layout
         ScrollPane sp = new ScrollPane();
         VBox root = new VBox(10);
@@ -45,9 +57,8 @@ public class UserDetails {
         // Pictures section
         Label picturesLabel = new Label("Upload Pictures (Up to 6):");
         Button uploadButton = new Button("Upload Picture");
-        HBox picturesBox = new HBox(10); // Holds the picture file names
-        picturesBox.setPadding(new Insets(10));
-        List<String> uploadedPictures = new ArrayList<>();
+        uploadedPictures = new ArrayList<>();
+        HBox pictureHbox = new HBox(3);
 
         uploadButton.setOnAction(e -> {
             if (uploadedPictures.size() < 6) {
@@ -55,20 +66,111 @@ public class UserDetails {
                 fileChooser.setTitle("Choose Picture");
                 fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg"));
                 File selectedFile = fileChooser.showOpenDialog(stage);
+
                 if (selectedFile != null) {
+                    Label fileLabel = new Label(selectedFile.getName());
                     /*
                      * selectedFile.getAbsolutePath()) -> this file is what cloudinary gets
                      * and instead of add it to the list of strings ill add the cloudinary url to the list of strings
                      */
-                    String urlToDB = CloudinaryUtils.Upload(selectedFile);
-                    if(urlToDB == null) return;
-                    uploadedPictures.add(urlToDB);
-                    Label fileLabel = new Label(selectedFile.getName());
-                    picturesBox.getChildren().add(fileLabel);
+                    //TASK TEST
+                    Task<String> uploadPictureTask = new Task<String>() {
+                        @Override
+                        protected String call() throws Exception {
+                            return CloudinaryUtils.Upload(selectedFile);
+                        }
+                    };
+                    uploadPictureTask.setOnScheduled(e1->{
+
+                            progressIndicator.setVisible(true);
+
+                    });
+                    uploadPictureTask.setOnSucceeded(e2->{
+
+                            progressIndicator.setVisible(false);
+
+                        try {
+                            String res = uploadPictureTask.get();
+                            uploadedPictures.add(res);
+                            Image newimg;
+                            try {
+                                newimg = ImageUtils.loadCorrectedImage(res);
+                            } catch (IOException ex) {
+                                throw new RuntimeException(ex);
+                            } catch (URISyntaxException ex) {
+                                throw new RuntimeException(ex);
+                            }
+
+                            ImageView newImageView = new ImageView(newimg);
+                            newImageView.setFitWidth(100);
+                            newImageView.setFitHeight(100);
+                            // hbox filelabel, delete icon
+                            Button btn = new Button();
+                            btn.setBackground(Background.EMPTY);
+                            btn.setGraphic(new FontIcon("fas-trash"));
+
+                            HBox crudOps = new HBox(10,fileLabel,btn);
+                            VBox border = new VBox(newImageView, crudOps);
+                            border.setStyle("-fx-border-color:  #7FB3FF; -fx-border-width: 3px;");
+
+                            pictureHbox.getChildren().add(border);
+                            btn.setOnAction(actionEvent -> {
+                                boolean ok = CloudinaryUtils.deleteFromCloudinaryByUrl(res);
+                                if (ok){
+//                                    System.out.println("success");
+                                    pictureHbox.getChildren().remove(border);
+                                }
+//                                System.out.println("clicked" + btn);
+                            });
+                        } catch (InterruptedException ex) {
+                            throw new RuntimeException(ex);
+                        } catch (ExecutionException ex) {
+                            throw new RuntimeException(ex);
+                        }
+                    });
+                    new Thread(uploadPictureTask).start();
                 }
+                    //TASK TEST END
+
+//                    String urlToDB = CloudinaryUtils.Upload(selectedFile);
+//                    if(urlToDB == null) return;
+//                    uploadedPictures.add(urlToDB);
+////                    picturesBox.getChildren().add(fileLabel);
+//                    Image newimg;
+//                    try {
+//                        newimg = ImageUtils.loadCorrectedImage(urlToDB);
+//                    } catch (IOException ex) {
+//                        throw new RuntimeException(ex);
+//                    } catch (URISyntaxException ex) {
+//                        throw new RuntimeException(ex);
+//                    }
+//
+//                    ImageView newImageView = new ImageView(newimg);
+//                    newImageView.setFitWidth(100);
+//                    newImageView.setFitHeight(100);
+//                    // hbox filelabel, delete icon
+//                    Button btn = new Button();
+//                    btn.setBackground(Background.EMPTY);
+//                    btn.setGraphic(new FontIcon("fas-trash"));
+//
+//                    HBox crudOps = new HBox(10,fileLabel,btn);
+//                    VBox border = new VBox(newImageView, crudOps);
+//                    border.setStyle("-fx-border-color:  #7FB3FF; -fx-border-width: 3px;");
+//
+//                    pictureHbox.getChildren().add(border);
+//                    btn.setOnAction(actionEvent -> {
+//                        boolean ok = CloudinaryUtils.deleteFromCloudinaryByUrl(urlToDB);
+//                        if (ok){
+//                            System.out.println("success");
+//                            pictureHbox.getChildren().remove(border);
+//                        }
+//                        System.out.println("clicked" + btn);
+//                    });
+
+
             } else {
                 Alert alert = new Alert(Alert.AlertType.WARNING, "You can only upload up to 6 pictures.", ButtonType.OK);
-                alert.showAndWait();
+                alert.show();
             }
         });
 
@@ -80,29 +182,31 @@ public class UserDetails {
             String username = usernameField.getText();
             if (firstName.isEmpty() || lastName.isEmpty() || username.isEmpty() || uploadedPictures.isEmpty()) {
                 Alert alert = new Alert(Alert.AlertType.ERROR, "Please fill in all fields and upload at least one picture.", ButtonType.OK);
-                alert.showAndWait();
+                alert.show();
             } else {
                 // Save user details
-                user.setFirstName(firstName);
-                user.setLastName(lastName);
-                user.setUsername(username);
-                user.setPictures(uploadedPictures);
+                UnloggedUserManager.getUser().setFirstName(firstName);
+                UnloggedUserManager.getUser().setLastName(lastName);
+                UnloggedUserManager.getUser().setUsername(username);
+                UnloggedUserManager.getUser().setPictures(uploadedPictures);
 
                 Alert alert = new Alert(Alert.AlertType.INFORMATION, "User details saved successfully!", ButtonType.OK);
-                alert.showAndWait();
+                alert.show();
                 // Optionally transition to another stage
                 PrefrencesWindow pWindow = new PrefrencesWindow();
-                pWindow.showPrefrencesWindow(stage, user);
+                pWindow.showPrefrencesWindow(stage);
             }
         });
 
         // Add all elements to the layout
-        root.getChildren().addAll(firstNameLabel, firstNameField, lastNameLabel, lastNameField, usernameLabel, usernameField, picturesLabel, uploadButton, picturesBox, submitButton);
+        root.getChildren().addAll(firstNameLabel, firstNameField, lastNameLabel, lastNameField, usernameLabel, usernameField, picturesLabel, uploadButton, pictureHbox, submitButton);
+        StackPane stackPane = new StackPane(root, progressIndicator);
+        StackPane.setAlignment(progressIndicator, Pos.CENTER);
         App.BackToLoginBtn(root, stage);
-        sp.setContent(root);
+        sp.setContent(stackPane);
 
         // Set the scene and show the stage
-        Scene scene = new Scene(sp, 400, 300);
+        Scene scene = new Scene(sp, 600, 800);
         stage.setScene(scene);
         stage.setTitle("User Details");
         stage.show();

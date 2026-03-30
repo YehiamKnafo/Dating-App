@@ -10,13 +10,15 @@
   "dependencies": {
     "bcrypt": "^6.0.0",
     "body-parser": "^1.20.3",
+    "cloudinary": "^2.9.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.22.1",
+    "ioredis": "^5.10.1",
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.8.4",
-    "nodemailer": "^7.0.12",
+    "resend": "^6.9.3",
     "socket.io": "^4.8.3",
     "twilio": "^5.4.2"
   },

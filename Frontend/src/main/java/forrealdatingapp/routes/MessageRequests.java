@@ -1,5 +1,6 @@
 package forrealdatingapp.routes;
 
+import forrealdatingapp.utilities.TimeoutInterceptor;
 import okhttp3.*;
 
 import java.io.IOException;
@@ -12,18 +13,17 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import forrealdatingapp.chatScenes.ChatZone;
 import forrealdatingapp.dtos.Message;
 import forrealdatingapp.dtos.UnreadCounter;
-import static forrealdatingapp.routes.RouterUtils.*;
+import static forrealdatingapp.utilities.RouterUtils.*;
 public class MessageRequests {
     public static List<Map<String, Object>> FetchMessages(String userId, String matchId) {
+        OkHttpClient client = BASE_CLIENT.newBuilder()
+                .addInterceptor(new TimeoutInterceptor(30))
+                .build();
         try {
             Map<String, String> jsonMap = new HashMap<>(Map.of("matchID", matchId));
             String json = manageJSON().writeValueAsString(jsonMap);
 
-            OkHttpClient client = new OkHttpClient.Builder()
-                    .connectTimeout(java.time.Duration.ofSeconds(10))
-                    .readTimeout(java.time.Duration.ofSeconds(10))
-                    .writeTimeout(java.time.Duration.ofSeconds(10))
-                    .build();
+
 
             RequestBody body = RequestBody.create(
                     json,
@@ -45,12 +45,11 @@ public class MessageRequests {
         }
     }
     public static List<Message> getLastMessages(String userId) {
+        OkHttpClient client = BASE_CLIENT.newBuilder()
+                .addInterceptor(new TimeoutInterceptor(30))
+                .build();
         try {
-            OkHttpClient client = new OkHttpClient.Builder()
-                    .connectTimeout(java.time.Duration.ofSeconds(10))
-                    .readTimeout(java.time.Duration.ofSeconds(10))
-                    .writeTimeout(java.time.Duration.ofSeconds(10))
-                    .build();
+
 
             Request request = new Request.Builder()
                     .url(getHost() + "messages/latest-messages")
@@ -65,43 +64,41 @@ public class MessageRequests {
             return null;
         }
     }
-    public static void UpdateCounter(String id){
-        try {
-            String json = manageJSON().writeValueAsString(ChatZone.messageCounters);
-
-            OkHttpClient client = new OkHttpClient.Builder()
-                    .connectTimeout(java.time.Duration.ofSeconds(10))
-                    .readTimeout(java.time.Duration.ofSeconds(10))
-                    .writeTimeout(java.time.Duration.ofSeconds(10))
-                    .build();
-
-            RequestBody body = RequestBody.create(
-                    json,
-                    MediaType.parse("application/json; charset=utf-8")
-            );
-
-            Request request = new Request.Builder()
-                    .url(getHost() + "messages/update-counter")
-                    .addHeader("x-api-key", manageToken().getToken(id))
-                    .put(body)
-                    .build();
-
-            try (Response response = client.newCall(request).execute()) {
-                System.out.println("Response code: " + response.code());
-                System.out.println("Response body: " + response.body().string());
-            }
-        } catch (IOException e) {
-            System.out.println(e.getLocalizedMessage());
-        }
-    }
+//    public static void UpdateCounter(String id){
+//        OkHttpClient client = BASE_CLIENT.newBuilder()
+//                .addInterceptor(new TimeoutInterceptor(30))
+//                .build();
+//        try {
+//            String json = manageJSON().writeValueAsString(ChatZone.messageCounters);
+//
+//
+//
+//            RequestBody body = RequestBody.create(
+//                    json,
+//                    MediaType.parse("application/json; charset=utf-8")
+//            );
+//
+//            Request request = new Request.Builder()
+//                    .url(getHost() + "messages/update-counter")
+//                    .addHeader("x-api-key", manageToken().getToken(id))
+//                    .put(body)
+//                    .build();
+//
+//            try (Response response = client.newCall(request).execute()) {
+//                System.out.println("Response code: " + response.code());
+////                System.out.println("Response body: " + response.body().string());
+//            }
+//        } catch (IOException e) {
+//            System.out.println(e.getLocalizedMessage());
+//        }
+//    }
 
     public static List<UnreadCounter> ShowUnreadMessages(String id) {
+        OkHttpClient client = BASE_CLIENT.newBuilder()
+                .addInterceptor(new TimeoutInterceptor(30))
+                .build();
         try {
-            OkHttpClient client = new OkHttpClient.Builder()
-                    .connectTimeout(java.time.Duration.ofSeconds(10))
-                    .readTimeout(java.time.Duration.ofSeconds(10))
-                    .writeTimeout(java.time.Duration.ofSeconds(10))
-                    .build();
+
 
             Request request = new Request.Builder()
                     .url(getHost() + "messages/unreadmessages")
@@ -118,12 +115,11 @@ public class MessageRequests {
     }
 
     public static void ResetMessageCounter(String id, String matchId) {
+        OkHttpClient client = BASE_CLIENT.newBuilder()
+                .addInterceptor(new TimeoutInterceptor(30))
+                .build();
         try {
-            OkHttpClient client = new OkHttpClient.Builder()
-                    .connectTimeout(java.time.Duration.ofSeconds(10))
-                    .readTimeout(java.time.Duration.ofSeconds(10))
-                    .writeTimeout(java.time.Duration.ofSeconds(10))
-                    .build();
+
 
             Request request = new Request.Builder()
                     .url(getHost() + "messages/resetCounter/" + matchId)

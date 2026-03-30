@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { MONGO_URL } = require('../dotenvconf');
+const { MONGO_URL } = require('../secret/dotenvconf');
 
 
 const connectToDB = async() =>  {

@@ -74,26 +74,26 @@ router.get("/latest-messages", auth , async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
-router.put("/update-counter",auth,  async (req, res) => {
-  const { messageCounters } = req.body; // Example: { "matchedUserId123": 5, "matchedUserId456": 2 }
-  const userId = req.tokenData._id; // Authenticated user's ID
+// router.put("/update-counter",auth,  async (req, res) => {
+//   const { messageCounters } = req.body; // Example: { "matchedUserId123": 5, "matchedUserId456": 2 }
+//   const userId = req.tokenData._id; // Authenticated user's ID
 
-  try {
-      // Loop through each matched_user_id and update only the authenticated user's matches
-      for (const matchedUserId in messageCounters) {
-          const messageCount = messageCounters[matchedUserId];
+//   try {
+//       // Loop through each matched_user_id and update only the authenticated user's matches
+//       for (const matchedUserId in messageCounters) {
+//           const messageCount = messageCounters[matchedUserId];
 
-          await MatchModel.updateOne(
-              { user_id: userId, matched_user_id: matchedUserId }, // Match the authenticated user & their matched user
-              { $set: { messageCounter: messageCount } }
-          );
-      }
+//           await MatchModel.updateOne(
+//               { user_id: userId, matched_user_id: matchedUserId }, // Match the authenticated user & their matched user
+//               { $set: { messageCounter: messageCount } }
+//           );
+//       }
 
-      res.json({ success: true, message: "Message counters updated." });
-  } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
-  }
-});
+//       res.json({ success: true, message: "Message counters updated." });
+//   } catch (error) {
+//       res.status(500).json({ success: false, error: error.message });
+//   }
+// });
 router.get("/unreadmessages",auth , async (req, res) => {
     const userID = req.tokenData._id;
     try {

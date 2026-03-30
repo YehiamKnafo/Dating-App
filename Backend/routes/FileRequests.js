@@ -1,16 +1,16 @@
 const auth = require('../middlewares/jwtConfig');
-const { validatePicture, UserModel } = require('../models/usersModel');
+const { validatePicture, UserModel, validatePictureChange } = require('../models/usersModel');
 
 const router = require('express').Router();
 
 router.put('/addpicture/:id',auth, async (req, res) => {
-  let idEdit = req.params.id;
+  const myId = req.tokenData._id;
   let { error } = validatePicture(req.body);
   if (error) {
       return res.status(400).json(error.details[0].message);
   }
   try {
-      let data = await UserModel.updateOne({ _id: idEdit}, {$push:{pictures: req.body.url}});
+      let data = await UserModel.updateOne({ _id: myId}, {$push:{pictures: req.body.url}});
       res.json(data);
 
   } catch (err) {
@@ -48,4 +48,35 @@ router.put("/changeprofilepic", auth, async (req, res) => {
     }
 
 });
+router.put("/changepic", auth, async (req, res) => {
+    const { oldUrl, newUrl } = req.body; // Expecting both
+    const { error } = validatePictureChange(req.body);
+      if (error) {
+      console.log(error);
+      
+      return res.status(403).json({err: error.details[0].message});
+      
+    }
+    try {
+        const result = await UserModel.updateOne(
+            { 
+                _id: req.tokenData._id, 
+                pictures: oldUrl 
+            },
+            { 
+                $set: { "pictures.$": newUrl } 
+            }
+        );
+
+        if (result.matchedCount === 0) {
+            return res.status(404).json({ err: "Old URL not found in user's list" });
+        }
+
+        return res.sendStatus(200);
+    } catch (error) {
+        console.error(error);
+        return res.sendStatus(500);
+    }
+});
+
   module.exports = router;
