@@ -23,10 +23,10 @@ A Java-based frontend application for a real-time dating platform with MongoDB b
 <img src="assets/profilepage.png" width="400"/>
 
 ### Matches and chats screens
-<img src="assets/matchtyping.png" width="800"/>
-<img src="assets/matchesunread.png" width="800"/>
+<img src="assets/matchtyping.png" width="900"/>
+<img src="assets/matchesunread.png" width="900"/>
 
-<img src="assets/chatzone.png" width="800"/>
+<img src="assets/chatzone.png" width="900"/>
 
 
 
