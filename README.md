@@ -3,30 +3,30 @@ A Java-based frontend application for a real-time dating platform with MongoDB b
 
 ## Project Pictures
 ### Loading Screen
-<img src="assets/loadingscreen.png" width="200"/>
+<img src="assets/loadingscreen.png" width="400"/>
 
 ### Login Screen
-<img src="assets/loginscreen.png" width="200"/>
+<img src="assets/loginscreen.png" width="400"/>
 
 
 ### Otp send and verify screen
-<img src="assets/otpsendandverify.png" width="200"/>
+<img src="assets/otpsendandverify.png" width="400"/>
 
 ### Sign up process screens 
-<img src="assets/userdetails.png" width="200"/>
-<img src="assets/userdetails2.png" width="200"/>
+<img src="assets/userdetails.png" width="400"/>
+<img src="assets/userdetails2.png" width="400"/>
 
 ### Explore page 
-<img src="assets/explorepage.png" width="200"/>
+<img src="assets/explorepage.png" width="400"/>
 
 ### Profile page 
-<img src="assets/profilepage.png" width="200"/>
+<img src="assets/profilepage.png" width="400"/>
 
 ### Matches and chats screens
-<img src="assets/matchtyping.png" width="200"/>
-<img src="assets/matchesunread.png" width="200"/>
+<img src="assets/matchtyping.png" width="400"/>
+<img src="assets/matchesunread.png" width="400"/>
 
-<img src="assets/chatzone.png" width="200"/>
+<img src="assets/chatzone.png" width="400"/>
 
 
 
