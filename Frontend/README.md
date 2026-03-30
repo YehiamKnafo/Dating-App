@@ -1,10 +1,5 @@
-# Real Dating App - Frontend
 
-A Java-based frontend application for a real-time dating platform with MongoDB backend and socketio integration.
-
-For the already deployed version check the [official App Release](https://github.com/yehiamtheone/forrealdatingapp/releases/download/official-app-exe/forrealdatingapp.zip)
-<!-- should go with static backend for this the spare one -->
-<!-- ## Prerequisites
+## Prerequisites
 
 
 - **Media Storage**: Cloudinary account (optional, for image uploads)
@@ -82,11 +77,7 @@ For the already deployed version check the [official App Release](https://github
 - **Add Runtime**: Bundle JRE for standalone execution
 - **Create EXE**: Generate executable using Launch4j (`./gradlew createExe`)
 - **Create ZIP**: Bundle JRE with executable for distribution
-- **Publish GitHub Release**: Upload distribution ZIP 
 
-**Notes**
+<!-- **Notes** -->
 
-I injected my own dotenv with my cloud and server into it, 
-you could easily use your own local server and cloud using 
-the setx command (for windows only).
- -->
+

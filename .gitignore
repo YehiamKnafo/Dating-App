@@ -7,10 +7,14 @@ backendcontentfordevops/
 build
 /Backend/NodemailerConfig.js
 /Backend/middlewares/rateLimiter.js
+/Backend/users.json
+/Backend/readme-back.md
 .vscode
 bin
 .env
-Frontend/.idea
+/Frontend/.idea
+/Frontend/jenkins-file-for-release
 jre
 .gradle
 node_modules
+token-db-implementation.js

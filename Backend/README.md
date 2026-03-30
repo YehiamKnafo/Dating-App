@@ -1,132 +1,97 @@
-# Real Dating App - Backend
+# Environment Variables Configuration and important notes
+- `frontend`: Contains JavaFX code  
+- `backend`: Contains Node.js/API code  
+- `backend for credentials`: It purpose is to validate the user before giving credentials as i cant use something like cors cause frontend is offline client. 
+- `other`: Environment Variables Configuration and important notes
 
-A JavaScript-based backend application for a real-time dating platform with MongoDB database, Express-js backend and socket integration.
+This document outlines the environment variables required for different deployment scenarios and application components.
 
-<!-- ## Prerequisites
+## Environment Variables Reference
 
-- **Frontend Setup Required**: Clone and set up the [frontend branch](https://github.com/yehiamtheone/forrealdatingapp/tree/Frontend) 
+### Core Configuration
+- `EXPRESS AND WEBSOCKETIO`: HTTP server and socket endpoint URL (e.g., `http://127.0.0.1:3000/`)
 
-- **Database**: MongoDB (Atlas cloud or local installation)
+- `JWT_SECRET`: Secret key for JWT token generation and validation (use any secure random string)
 
+### Database Configuration
+- `MONGO_URL`: MongoDB connection string
+  - Local: `mongodb://localhost:27017/`
+  - Atlas: `mongodb+srv://<username>:<password>@cluster0.eyhd9.mongodb.net/`
+  - Docker: `mongodb://<your_db_service_name>:27017/<your_db_name>`
 
-
-
-- `EXPRESS`: Backend server URL (e.g., `http://localhost:3000`)
-
-- `MONGO_URL`: Atlas url from mongo atlas or localhost usually on PORT 27017 if used locally or database service name on PORT 27017 for docker compose configuration.
-   
- 
-- `JWT_SECRET`: for jwt token authentications
-
-- `GMAIL_SMTP_EMAIL`: Gmail address for SMTP email sending
-
-- `GMAIL_SMTP_PASS`: App-specific password from Google Account settings (not your regular Gmail password)
-
-- `TCP`: For real time socket connection
-
-## Development Setup
-
-### Local Development
-
-1. **Set environment variables (Windows)**
-   ```bat
-   setx EXPRESS "e.g., http:localhost:3000"
-   setx TCP "e.g., http:localhost:3000"
-   setx JWT_SECRET "any_string"
-   setx CLOUDINARY_URL "your_cloudinary_url_here"
-   setx MONGO_URL "atlas srv domain or local domain"
-   setx GMAIL_SMTP_EMAIL "your_email"
-   setx GMAIL_SMTP_PASS "your_password"
-   ```
-2. **Clone and navigate to project directory**
-   ```bash
-   git clone -b Backend https://github.com/yehiamtheone/forrealdatingapp.git frda-backend
-   cd frda-backend/contents
-   ```
-3. **Build the application**
-   ```bash
-   npm ci
-   npm start
-   ```
-
-## Jenkins CI/CD Pipeline
-
-### Pipeline Configuration
-
-1. **Jenkins Setup**
-   - Access Jenkins on port 8080
-   - Go to: Dashboard → Pipeline → Configure → Pipeline script from SCM
-   - Set Repository URL to this repository
-   - Configure branch specifier for the correct branch
-2. **Node Configuration**
-   - Navigate to: Manage Jenkins → Nodes
-   - Create or configure existing node
-   - Set label to `unix` for Unix-based builds
-
-### Pipeline Files
-**Jenkinsfile**: projectRoot/Jenkinsfile
-
-**Purpose**: Upload the server and make it ready to handle api requests and tcp requests.
-
-**Requirements**: 
-- could be Unix or windows agent/container (labeled 'unix || win could be either one or both of them')
-- Node (recommended @11+)
-
-**Stages**:
-- **Checkout**: Verify Git repository access
-- **Add Env File**: creating .env file
-with values that injected from jenkins credentials
-could be set through http://<your_host>:8080/ in Dashboard -> Mange jenkins -> credintales -> Stores scoped to Jenkins -> System -> Global credentials (unrestricted) -> Add Credentials -> kind Secret text
-- **Upload Server**: use command 
-```sh
-npm ci
-```
-and for make the jenkins stages go through and not stuck as the server up 
-use
-```sh
-nohup npm start &
-```
-gurantee to work on unix with nohup (windows might struggle with this).
-
-## Docker Compose Setup
-
-1. **Clone and navigate to project directory**
-   ```bash
-   git clone -b Backend https://github.com/yehiamtheone/forrealdatingapp.git frda-backend
-   cd frda-backend
-   ```
-
-2. **At the frda-backend directory create a dotenv file based on the dot env expample (or use whats written below)**
-   ```ini
-   EXPRESS=http://<ip>:<port>/
-   TCP=<ip>:<port>
-   JWT_SECRET=<any_string>
-   MONGO_URL=<mongodb://localhost:27017/ || mongodb+srv://<username>:<password>@cluster0.eyhd9.mongodb.net/>
-   GMAIL_SMTP_EMAIL=<your_email>
-   GMAIL_SMTP_PASS=<your_api_password_from_google_account_settings>
-   ```
-
-3. **Make sure you got your docker daemon up and running**
-
-4. **Compose**
-   ```bash
-   docker compose up --build -d
-   ```
-   ### Docker Compose Commands
-
-   **To stop the containers**
-      ```bash
-      docker compose down
-      ```
-   **To bring them back up (no rebuild needed)**
-   ```bash
-   docker compose up -d
-   ```
-   **To destroy it completly from you docker**
-   ```bash
-   docker compose down -v --rmi all
-   ```
+### File Upload Configuration
+- `CLOUDINARY_URL`: Cloudinary service URL for image/file uploads
+  - Format: `cloudinary://<your_api_key>:<your_api_secret>@<your_cloud_name>`
 
 
- -->
+
+## Notes
+
+- Replace all placeholder values (`<>`) with your actual configuration values
+- FoPASSWORD`, use an App Password generated from your Google Account security settings, not your regular password
+- The `JWT_SECRET` should be a long, random string for security purposes
+- MongoDB URL format depends on whether you're using a local instance or MongoDB Atlas cloud service
+- For deployment web servers like render etc the backend ip interface will be selected automatically by the service, for custom domains its better go by the dotenv configuration 
+
+## Architecture Notes
+
+### Technology Stack
+- **Frontend**: Java with Gradle build system
+- **Backend**: Express.js (Node.js) and WebSocket.io
+- **Database**: MongoDB
+- **Real-time Communication**: WebSocket.io
+- **Media Storage**: Cloudinary (optional)
+- **Build Tool**: Gradle for frontend Npm for backend
+- **DevOps***: Cloud service is render and image on docker hub
+
+*render is free and was fitted for my first project.
+
+
+### Port Configuration
+- **Backend API**: Port 3000
+
+
+*i would guess render serving with nginx so its just fyi*
+
+---
+
+
+### Platform Support
+- **Windows**: Full support with standalone executable
+- **macOS/Linux**: Manual runtime setup required (not packaged as standalone)
+
+## Important Notes
+
+- **Official App Limitation**: If running the official app without connection handling, manual environment configuration is required
+- **Cloudinary Integration**: Follow the existing Cloudinary API implementation; do not substitute with different APIs
+- **Database Instructions**: Refer to the backend branch for MongoDB setup and connection strings
+- **Cross-Platform**: While Gradle supports dynamic runtime for macOS/Linux, standalone app packaging i choose for Windows-only for obvious purposes.
+
+## Troubleshooting
+
+1. **Build Issues**: Ensure all environment variables are properly set
+2. **Connection Problems**: Verify backend server is running on the specified port
+3. **Database Errors**: Check MongoDB connection string in backend configuration
+
+<!-- ## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request -->
+
+## Support
+
+For issues related to:
+- **Backend Setup**: Check the branch documentation
+- **Database Configuration**: Refer to MongoDB connection setup in backend
+
+
+
+
+<!-- ## License
+
+[Add your license information here] -->
+
 
