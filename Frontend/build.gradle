@@ -8,10 +8,8 @@ plugins {
 }
 //JENKINS WAY
 version = System.getenv("JAVA_DATING_APP_VERSION");
-def appName = System.getenv("JAVA_DATING_APP_NAME");
 //LOCAL WAY
 //version = "1.0.0-SNAPSHOT"
-//def appName = "DatingApp"
 
 repositories {
     mavenCentral()
@@ -29,7 +27,7 @@ javafx {
 mainClassName = 'forrealdatingapp.App'
 
 jar {
-    archiveBaseName = appName
+    archiveBaseName = "DatingApp"
     archiveVersion = version as String // Or use the global 'version' property
     manifest {
         attributes 'Main-Class': 'forrealdatingapp.Launcher'
@@ -93,7 +91,7 @@ launch4j {
 }
 tasks.register('zipLaunch4j', Zip) {
     dependsOn 'createExe'
-    archiveFileName = "$appName-${version}.zip" // Custom name with version
+    archiveFileName = "DatingApp-${version}.zip" // Custom name with version
     destinationDirectory = file(layout.buildDirectory.dir("distributions"))
 
     from(launch4jOutputDir) {

@@ -5,7 +5,6 @@ pipeline {
     environment {
         // Define environment variables (can be loaded from Jenkins credentials)
         JAVA_DATING_APP_VERSION = "1.0.0-SNAPSHOT"
-        JAVA_DATING_APP_NAME = "DatingApp"
         GITHUB_TOKEN = credentials("GITHUB_TOKEN")
     }
 
@@ -77,42 +76,24 @@ pipeline {
         
 
         // Stage 5: Publish GitHub Release
-        stage('Publish GitHub Release') {
-            steps {
+      stage('GitHub Release') {
+        steps {
+            withCredentials([string(credentialsId: 'github-token', variable: 'GH_TOKEN')]) {
                 script {
-                    // Reuse the same ZIP file path 
-                    
-                    def zipFilePath = "${WORKSPACE}/Frontend/build/distributions/${JAVA_DATING_APP_NAME}-${JAVA_DATING_APP_VERSION}.zip"
+                    dir('Frontend') {
+                        bat "echo # Release v${env.JAVA_DATING_APP_VERSION} > release-notes.md"
+                        bat "echo - Built automatically by Jenkins >> release-notes.md"
+                        bat "echo - High performance Beta build >> release-notes.md"
+                        // 1. Create the release
+                        bat "gh release create v${env.JAVA_DATING_APP_VERSION} --title \"Release ${env.JAVA_DATING_APP_VERSION}\" --notes-file release-notes.md"
                         
-
-                    // Log the file path being used
-                    echo "Attempting to upload file: ${zipFilePath}"
-
-
-                    // Create release notes file
-                    writeFile file: 'release-notes.md', text: "DatingApp executable version ${JAVA_DATING_APP_VERSION} - Built by Jenkins"
-                    // Create GitHub release
-                    createGitHubRelease(
-                        credentialId: 'GITHUB_TOKEN',
-                        repository: 'YehiamKnafo/Dating-App',
-                        tag: "official-app-exe",
-                        commitish: 'main',
-                        bodyFile: 'release-notes.md',
-                        draft: false
-                    )
-
-                    // Upload ZIP asset
-                    uploadGithubReleaseAsset(
-                        credentialId: 'GITHUB_TOKEN',
-                        repository: 'YehiamKnafo/Dating-App',
-                        tagName: "official-app-exe",
-                        uploadAssets: [
-                            [filePath: zipFilePath]
-                        ]
-                    )
+                        // 2. Upload the asset (streams from disk, no OOM error!)
+                        bat "gh release upload v${env.JAVA_DATING_APP_VERSION} build/distributions/DatingApp-${env.JAVA_DATING_APP_VERSION}.zip"
+                    }
                 }
             }
         }
+}
         //    stage('Clean Workspace') {
         //     steps {
         //         script {
