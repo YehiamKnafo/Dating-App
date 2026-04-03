@@ -50,6 +50,9 @@ public class App extends Application{
         matchesPage = new MatchesPage();
         isTokenOnline = false;
         serverStatusIndicator = new Label();
+        Image icon = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/datingappicon.png")));
+        NavigationManager.setStage(primaryStage);
+        primaryStage.getIcons().add(icon);
         LoadingScreen loadingScreen = new LoadingScreen();
         loadingScreen.showLoadingScreen(primaryStage);
         Task<Boolean> loginTask = new Task<Boolean>() {
@@ -62,10 +65,7 @@ public class App extends Application{
         loginTask.setOnSucceeded(e->{
             boolean res = loginTask.getValue();
             if (res){
-                Image icon = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/datingappicon.png")));
-                NavigationManager.setStage(primaryStage);
-//
-                primaryStage.getIcons().add(icon);
+
                 try {
                     loginWindow.showLoginWindow(primaryStage);
                 } catch (JsonProcessingException ex) {
