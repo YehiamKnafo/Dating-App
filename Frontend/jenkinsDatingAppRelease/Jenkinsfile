@@ -78,7 +78,7 @@ pipeline {
         // Stage 5: Publish GitHub Release
       stage('GitHub Release') {
         steps {
-            withCredentials([string(credentialsId: 'github-token', variable: 'GH_TOKEN')]) {
+            withCredentials([string(credentialsId: 'GITHUB_TOKEN', variable: 'GITHUB_TOKEN')]) {
                 script {
                     dir('Frontend') {
                         bat "echo # Release v${env.JAVA_DATING_APP_VERSION} > release-notes.md"
