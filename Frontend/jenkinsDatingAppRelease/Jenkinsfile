@@ -26,20 +26,23 @@ pipeline {
         //  Build the application using Gradle
         stage('Build') {
             steps {
-                script {
-                  
-                        bat 'gradle clean build' // Use 'sh' for Linux/macOS
-                
+                dir('Frontend') {
+                    script {
+                        // This calls the 'gradle' installed on your Windows OS
+                        bat 'gradle clean build' 
+                    }
                 }
             }
         }
         stage('Adding Runtime') {
             steps {
-                script {
+                dir('Frontend'){
+                    script {
+                        
+                        
+                        bat 'gradle downloadJre' // Use 'sh' for Linux/macOS
                     
-                    
-                    bat 'gradle downloadJre' // Use 'sh' for Linux/macOS
-                   
+                    }
                 }
             }
         }
@@ -47,10 +50,12 @@ pipeline {
         // Stage 3: Create EXE file
         stage('Create EXE') {
             steps {
-                script {
+                dir('Frontend'){
+                    script {
+                        
+                        bat 'gradle createExe' // Use 'sh' for Linux/macOS
                     
-                    bat 'gradle createExe' // Use 'sh' for Linux/macOS
-                   
+                    }
                 }
             }
         }
@@ -58,9 +63,11 @@ pipeline {
         // Stage 4: Create ZIP file
         stage('Create Zip') {
             steps {
-                script {
-                        bat 'gradle zipLaunch4j' // Use 'sh' for Linux/macOS
-                
+                dir('Frontend'){
+                    script {
+                            bat 'gradle zipLaunch4j' // Use 'sh' for Linux/macOS
+                    
+                    }
                 }
             }
         }
