@@ -85,7 +85,8 @@ pipeline {
                         bat "echo - Built automatically by Jenkins >> release-notes.md"
                         bat "echo - High performance Beta build >> release-notes.md"
                         // 1. Create the release
-                        bat "gh release create v${env.JAVA_DATING_APP_VERSION} --title \"Release ${env.JAVA_DATING_APP_VERSION}\" --notes-file release-notes.md"
+                        // Use --target to tell GH which branch to tag
+                        bat "gh release create v${env.JAVA_DATING_APP_VERSION} --target main --title \"Release ${env.APP_VERSION}\" --notes-file release-notes.md"
                         
                         // 2. Upload the asset (streams from disk, no OOM error!)
                         bat "gh release upload v${env.JAVA_DATING_APP_VERSION} build/distributions/DatingApp-${env.JAVA_DATING_APP_VERSION}.zip"
