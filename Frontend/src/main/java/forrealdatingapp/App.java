@@ -36,16 +36,20 @@ import static forrealdatingapp.utilities.RouterUtils.manageToken;
 
 public class App extends Application{
     private static final Logger log = LoggerFactory.getLogger(App.class);
-    public static LoginWindow loginWindow = new LoginWindow();
-    public static MatchesPage matchesPage = new MatchesPage();
-    public static boolean isTokenOnline = false;
+    public static LoginWindow loginWindow;
+    public static MatchesPage matchesPage;
+    public static boolean isTokenOnline;
     public static String id;
     public static ProgressIndicator progressIndicator;
-    public static Label serverStatusIndicator = new Label();
+    public static Label serverStatusIndicator;
 
     @Override
     public void start(Stage primaryStage)  throws IOException {
         //TEST
+        loginWindow = new LoginWindow();
+        matchesPage = new MatchesPage();
+        isTokenOnline = false;
+        serverStatusIndicator = new Label();
         LoadingScreen loadingScreen = new LoadingScreen();
         loadingScreen.showLoadingScreen(primaryStage);
         Task<Boolean> loginTask = new Task<Boolean>() {

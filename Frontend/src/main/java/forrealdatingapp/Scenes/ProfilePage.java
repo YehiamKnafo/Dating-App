@@ -275,8 +275,11 @@ public class ProfilePage {
     removeBio.setOnAction((e)->{
         User bioChange = new User();
         bioChange.setBio("");
-        UserProfileRequests.UpdateBio(bioChange, App.id);
-        showSuccess("Bio removed successfuly");
+        boolean ok = UserProfileRequests.UpdateBio(bioChange, App.id);
+        if (ok){
+            bioText.setText("");
+            showSuccess("Bio removed successfuly");
+        }
 
     });
     Button backToProfileButton = createStyledButton("Back to Profile", "back");

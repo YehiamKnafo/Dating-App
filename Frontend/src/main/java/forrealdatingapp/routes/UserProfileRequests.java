@@ -123,7 +123,7 @@ public class UserProfileRequests {
                 .addInterceptor(new TimeoutInterceptor(30))
                 .build();
             String json = manageJSON().writeValueAsString(user);
-            System.out.println(json);
+//            System.out.println(json);
 
 
 
@@ -155,7 +155,7 @@ public class UserProfileRequests {
         }
 
     }
-    public static void UpdateBio(User bioChange, String _id) {
+    public static boolean UpdateBio(User bioChange, String _id) {
         OkHttpClient client = BASE_CLIENT.newBuilder()
                 .addInterceptor(new TimeoutInterceptor(30))
                 .build();
@@ -177,10 +177,13 @@ public class UserProfileRequests {
 
             try (Response response = client.newCall(request).execute()) {
                 System.out.println("Response Code: " + response.code());
-                System.out.println("Response Body: " + response.body().string());
+//                System.out.println("Response Body: " + response.body().string());
+                return response.code() == 200;
+
             }
         } catch (Exception e) {
             e.printStackTrace();
+            return false;
         }
     }
     public static boolean deletePicture(String token, Map<String,Object> reqbody){

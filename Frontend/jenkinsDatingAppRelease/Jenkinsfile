@@ -1,0 +1,138 @@
+pipeline {
+    agent {
+        label 'yehiamE'
+    }
+    environment {
+        // Define environment variables (can be loaded from Jenkins credentials)
+        JAVA_DATING_APP_VERSION = "1.0.0-SNAPSHOT"
+        JAVA_DATING_APP_NAME = "DatingApp"
+        GITHUB_TOKEN = credentials("GITHUB_TOKEN")
+    }
+
+
+
+
+    stages {
+        // Stage 1: Checkout code from SCM (Git)
+
+        stage('Checkout') {
+            steps {
+                checkout scm // Checkout code from the configured SCM (e.g., Git)
+             
+            }
+            
+        }
+    
+        //  Build the application using Gradle
+        stage('Build') {
+            steps {
+                script {
+                  
+                        bat 'gradle clean build' // Use 'sh' for Linux/macOS
+                
+                }
+            }
+        }
+        stage('Adding Runtime') {
+            steps {
+                script {
+                    
+                    
+                    bat 'gradle downloadJre' // Use 'sh' for Linux/macOS
+                   
+                }
+            }
+        }
+
+        // Stage 3: Create EXE file
+        stage('Create EXE') {
+            steps {
+                script {
+                    
+                    bat 'gradle createExe' // Use 'sh' for Linux/macOS
+                   
+                }
+            }
+        }
+
+        // Stage 4: Create ZIP file
+        stage('Create Zip') {
+            steps {
+                script {
+                        bat 'gradle zipLaunch4j' // Use 'sh' for Linux/macOS
+                
+                }
+            }
+        }
+
+    
+
+        
+
+        // Stage 5: Publish GitHub Release
+        stage('Publish GitHub Release') {
+            steps {
+                script {
+                    // Reuse the same ZIP file path 
+                    
+                    def zipFilePath = "${WORKSPACE}/build/distributions/${JAVA_DATING_APP_NAME}-${JAVA_DATING_APP_VERSION}.zip"
+                        
+
+                    // Log the file path being used
+                    echo "Attempting to upload file: ${zipFilePath}"
+
+
+                    // Create release notes file
+                    writeFile file: 'release-notes.md', text: "DatingApp executable version ${JAVA_DATING_APP_VERSION} - Built by Jenkins"
+                    // Create GitHub release
+                    createGitHubRelease(
+                        credentialId: 'GITHUB_TOKEN',
+                        repository: 'YehiamKnafo/Dating-App',
+                        tag: "official-app-exe",
+                        commitish: 'main',
+                        bodyFile: 'release-notes.md',
+                        draft: false
+                    )
+
+                    // Upload ZIP asset
+                    uploadGithubReleaseAsset(
+                        credentialId: 'GITHUB_TOKEN',
+                        repository: 'YehiamKnafo/Dating-App',
+                        tagName: "official-app-exe",
+                        uploadAssets: [
+                            [filePath: zipFilePath]
+                        ]
+                    )
+                }
+            }
+        }
+        //    stage('Clean Workspace') {
+        //     steps {
+        //         script {
+        //                 sh 'chmod +x gradlew'
+        //                 sh './gradlew clean' // Use 'sh' for Linux/macOS
+                
+        //         }
+        //     }
+        // }
+
+    }
+
+    post {
+        success {
+            echo 'Pipeline succeeded! 🎉'
+            // Notify the team
+        }
+        failure {
+            echo 'Pipeline failed! 😢'
+            // Notify the team
+        }
+        cleanup {
+            script {
+                // This safely deletes the workspace
+                deleteDir()
+            }
+        }
+    }
+
+}

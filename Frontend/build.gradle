@@ -6,6 +6,12 @@ plugins {
 
 
 }
+//JENKINS WAY
+//version = System.getenv("JAVA_DATING_APP_VERSION");
+//def appName = System.getenv("JAVA_DATING_APP_NAME");
+//LOCAL WAY
+version = "1.0.0-SNAPSHOT"
+def appName = "DatingApp"
 
 repositories {
     mavenCentral()
@@ -23,6 +29,8 @@ javafx {
 mainClassName = 'forrealdatingapp.App'
 
 jar {
+    archiveBaseName = appName
+    archiveVersion = version as String // Or use the global 'version' property
     manifest {
         attributes 'Main-Class': 'forrealdatingapp.Launcher'
     }
@@ -35,22 +43,30 @@ jar {
 //        include '.env'
 //    }
 }
-def launch4jOutputDir = "${buildDir}/launch4j"
+//"${buildDir}/launch4j"
+def rootFolder = layout.projectDirectory;
+def buildFolder = layout.buildDirectory
+def launch4jOutputDir = buildFolder.dir("distributions/exeWithoutJre")
 
 tasks.register('downloadJre') {
     doLast {
         // Define the download URL for Adoptium Temurin JRE 21 (Windows x64)
         def jreUrl = "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.2%2B13/OpenJDK21U-jre_x64_windows_hotspot_21.0.2_13.zip"
-        def jreZip = "${rootProject.projectDir}/jre.zip"
-        def jreDir = "${rootProject.projectDir}/jre"
+        def jreZipProperty = rootFolder.file("jre.zip")
+        def jreDirProperty = rootFolder.dir("jre")
+        // 2. Access the actual File object using .asFile
+        File jreZipFile = jreZipProperty.asFile
+        File jreDir = jreDirProperty.asFile
 
         // Create the jre-download directory if it doesn't exist
-        mkdir(jreDir)
+        if (!jreDir.exists()) {
+            jreDir.mkdirs()
+        }
 
         // Download the JRE
         println "Downloading JRE from $jreUrl..."
-        new URL(jreUrl).withInputStream { input ->
-            new File(jreZip).withOutputStream { output ->
+        URI.create(jreUrl).toURL().withInputStream { input ->
+            jreZipFile.withOutputStream { output ->
                 output << input
             }
         }
@@ -58,31 +74,32 @@ tasks.register('downloadJre') {
         // Extract the JRE
         println "Extracting JRE to $jreDir..."
         copy {
-            from zipTree(jreZip)
-            into jreDir
+            from zipTree(jreZipProperty)
+            into jreDirProperty
         }
 
         // Clean up the zip file
-        delete jreZip
+        delete jreZipProperty
 
         println "JRE downloaded and extracted to $jreDir"
     }
 }
 launch4j {
-    outfile = 'dating-app.exe'
+    outfile = 'DatingApp.exe'
     jarTask = project.tasks.jar
     bundledJrePath = 'jre' //
-    outputDir = "${buildDir}/launch4j"
+    outputDir = buildFolder.dir("distributions/exeWithoutJre").get().asFile.path
+
 }
 tasks.register('zipLaunch4j', Zip) {
     dependsOn 'createExe'
-    archiveFileName = "dating-app.zip" // Custom name with version
-    destinationDirectory = file("${buildDir}/distributions")
+    archiveFileName = "$appName-${version}.zip" // Custom name with version
+    destinationDirectory = file(layout.buildDirectory.dir("distributions"))
 
     from(launch4jOutputDir) {
         include '**/*'
     }
-    from("${rootProject.projectDir}/jre/jdk-21.0.2+13-jre") { // Include the bundled JRE
+    from(rootFolder.dir("jre/jdk-21.0.2+13-jre")) { // Include the bundled JRE
         into 'jre'
     }
 
@@ -90,50 +107,6 @@ tasks.register('zipLaunch4j', Zip) {
         println "Created zip archive at ${archiveFile.get()}"
     }
 }
-// def osName = System.getProperty("os.name").toLowerCase()
-// def javafxVersion = "23.0.2" // JavaFX version
-// def javafxPlatform = osName.contains("win") ? "win" : osName.contains("linux") ? "linux" : osName.contains("mac") ? "mac" : null
-// def javafxJmodsPath = "${rootProject.projectDir}/javafx-jmods" // Local path to store the JMODs
-
-// Task to download and extract JavaFX JMODs
-// tasks.register('downloadJavaFxJmods') {
-//     doLast {
-//         // Check if the JMODs directory already exists
-//         if (file(javafxJmodsPath).exists()) {
-//             println "JavaFX JMODs already exist at $javafxJmodsPath. Skipping download."
-//             return // Exit the task if the JMODs are already present
-//         }
-
-//         if (javafxPlatform == null) {
-//             throw new RuntimeException("Unsupported operating system: $osName")
-//         }
-
-//         def javafxUrl = "https://download2.gluonhq.com/openjfx/23.0.2/openjfx-23.0.2_windows-x64_bin-jmods.zip"
-//         def javafxZip = "${projectDir}/javafx-jmods.zip"
-
-//         // Create the javafx-jmods directory if it doesn't exist
-//         mkdir(javafxJmodsPath)
-
-//         // Download the JavaFX JMODs
-//         println "Downloading JavaFX JMODs from $javafxUrl..."
-//         new URL(javafxUrl).withInputStream { input ->
-//             new File(javafxZip).withOutputStream { output ->
-//                 output << input
-//             }
-//         }
-
-//         // Extract the JMODs
-//         println "Extracting JavaFX JMODs to $javafxJmodsPath..."
-//         copy {
-//             from zipTree(javafxZip)
-//             into javafxJmodsPath
-//         }
-
-//         // Clean up the zip file
-//         delete javafxZip
-//     }
-// }
-
 
 
 dependencies {
