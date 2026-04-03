@@ -82,7 +82,7 @@ pipeline {
                 script {
                     // Reuse the same ZIP file path 
                     
-                    def zipFilePath = "${WORKSPACE}/build/distributions/${JAVA_DATING_APP_NAME}-${JAVA_DATING_APP_VERSION}.zip"
+                    def zipFilePath = "${WORKSPACE}/Frontend/build/distributions/${JAVA_DATING_APP_NAME}-${JAVA_DATING_APP_VERSION}.zip"
                         
 
                     // Log the file path being used
