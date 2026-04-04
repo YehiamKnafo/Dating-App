@@ -62,19 +62,19 @@ pipeline {
                         def releaseExists = bat(script: "gh release view v${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE}", returnStatus: true) == 0
                         if(releaseExists){
                             echo "Old release found. Deleting..."
-                            bat "gh release delete v${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE} --yes"
+                            bat "gh release delete ${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE} --yes"
                         }else {
                             echo "No existing release found. Proceeding to create."
                         }
                         // 1. Create the release
                         // Use --target to tell GH which branch to tag
-                        bat "gh release create v${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE} --target main --title \"Release ${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE}\" --notes-file release-notes.md"
+                        bat "gh release create ${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE} --target main --title \"Release ${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE}\" --notes-file release-notes.md"
                         
                         // 2. Upload the asset (streams from disk, no OOM error!)
-                        bat "gh release upload v${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE} build/distributions/DatingApp-${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE}.zip"
+                        bat "gh release upload ${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE} build/distributions/DatingApp-${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE}.zip"
                         dir('build/jpackage') {
                            
-                            bat "gh release upload v${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE} DatingApp-Installer-${env.JAVA_DATING_APP_VERSION}.msi"
+                            bat "gh release upload ${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE} DatingApp-Installer-${env.JAVA_DATING_APP_VERSION}.msi"
                         }
                     }
                 }
