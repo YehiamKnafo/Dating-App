@@ -4,7 +4,7 @@ pipeline {
     }
     environment {
         // Define environment variables (can be loaded from Jenkins credentials)
-        JAVA_DATING_APP_VERSION = "1.0.1"
+        JAVA_DATING_APP_VERSION = "1.0.0"
         VERSION_TYPE = "SNAPSHOT"
         GITHUB_TOKEN = credentials("GITHUB_TOKEN")
     }
@@ -59,12 +59,23 @@ pipeline {
                         bat "echo - Built automatically by Jenkins >> release-notes.md"
                         bat "echo - High performance Beta build >> release-notes.md"
                         bat "echo - Better logo rendering >> release-notes.md"
+                        def releaseExists = bat(script: "gh release view v${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE}", returnStatus: true) == 0
+                        if(releaseExists){
+                            echo "Old release found. Deleting..."
+                            bat "gh release delete v${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE} --yes"
+                        }else {
+                            echo "No existing release found. Proceeding to create."
+                        }
                         // 1. Create the release
                         // Use --target to tell GH which branch to tag
                         bat "gh release create v${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE} --target main --title \"Release ${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE}\" --notes-file release-notes.md"
                         
                         // 2. Upload the asset (streams from disk, no OOM error!)
                         bat "gh release upload v${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE} build/distributions/DatingApp-${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE}.zip"
+                        dir('build/jpackage') {
+                           
+                            bat "gh release upload v${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE} DatingApp-Installer-${env.JAVA_DATING_APP_VERSION}.msi"
+                        }
                     }
                 }
             }
@@ -83,12 +94,12 @@ pipeline {
             echo 'Pipeline failed! 😢'
             // Notify the team
         }
-        // cleanup {
-        //     script {
-        //         // This safely deletes the workspace
-        //         deleteDir()
-        //     }
-        // }
+        cleanup {
+            script {
+                // This safely deletes the workspace
+                deleteDir()
+            }
+        }
     }
 
 }
