@@ -52,6 +52,7 @@ public class TimeoutInterceptor implements Interceptor {
                 response.close();
             } catch (IOException e) {
                 lastException = e;
+                System.err.println("Attempt " + (i + 1) + " failed with error: " + e.getMessage());
             }
 
             // --- STEP 2: Smooth Waiting (Only runs if we need to retry) ---
@@ -60,7 +61,6 @@ public class TimeoutInterceptor implements Interceptor {
                 long elapsed = 0;
                 long interval = 500;
                 System.out.println("Waiting " + totalWaitTime + "ms before next retry...");
-
                 while (elapsed < totalWaitTime) {
                     int dotCount = (int) ((elapsed / interval) % 4);
                     // Use a simpler string format to avoid .indent() issues in UI labels

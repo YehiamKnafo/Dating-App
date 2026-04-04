@@ -3,13 +3,16 @@ plugins {
     id  'java'
     id 'org.openjfx.javafxplugin' version '0.1.0'
     id 'edu.sc.seis.launch4j' version '3.0.6'
+    id 'org.beryx.runtime' version '2.0.1'
 
 
 }
 //JENKINS WAY
-version = System.getenv("JAVA_DATING_APP_VERSION");
+//version = System.getenv("JAVA_DATING_APP_VERSION");
+//versionType = System.getenv("VERSION_TYPE")
 //LOCAL WAY
-//version = "1.0.0-SNAPSHOT"
+version = "1.0.0"
+def versionType = "SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -44,65 +47,102 @@ jar {
 //"${buildDir}/launch4j"
 def rootFolder = layout.projectDirectory;
 def buildFolder = layout.buildDirectory
-def launch4jOutputDir = buildFolder.dir("distributions/exeWithoutJre")
+def jpackageOutputDir = buildFolder.dir("jpackage/DatingApp-$version-${versionType}")
 
-tasks.register('downloadJre') {
-    doLast {
-        // Define the download URL for Adoptium Temurin JRE 21 (Windows x64)
-        def jreUrl = "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.2%2B13/OpenJDK21U-jre_x64_windows_hotspot_21.0.2_13.zip"
-        def jreZipProperty = rootFolder.file("jre.zip")
-        def jreDirProperty = rootFolder.dir("jre")
-        // 2. Access the actual File object using .asFile
-        File jreZipFile = jreZipProperty.asFile
-        File jreDir = jreDirProperty.asFile
-
-        // Create the jre-download directory if it doesn't exist
-        if (!jreDir.exists()) {
-            jreDir.mkdirs()
-        }
-
-        // Download the JRE
-        println "Downloading JRE from $jreUrl..."
-        URI.create(jreUrl).toURL().withInputStream { input ->
-            jreZipFile.withOutputStream { output ->
-                output << input
-            }
-        }
-
-        // Extract the JRE
-        println "Extracting JRE to $jreDir..."
-        copy {
-            from zipTree(jreZipProperty)
-            into jreDirProperty
-        }
-
-        // Clean up the zip file
-        delete jreZipProperty
-
-        println "JRE downloaded and extracted to $jreDir"
-    }
-}
-launch4j {
-    outfile = 'DatingApp.exe'
-    jarTask = project.tasks.jar
-    bundledJrePath = 'jre' //
-    outputDir = buildFolder.dir("distributions/exeWithoutJre").get().asFile.path
-
-}
-tasks.register('zipLaunch4j', Zip) {
-    dependsOn 'createExe'
-    archiveFileName = "DatingApp-${version}.zip" // Custom name with version
+//tasks.register('downloadJre') {
+//    doLast {
+//        // Define the download URL for Adoptium Temurin JRE 21 (Windows x64)
+//        def jreUrl = "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.2%2B13/OpenJDK21U-jre_x64_windows_hotspot_21.0.2_13.zip"
+//        def jreZipProperty = rootFolder.file("jre.zip")
+//        def jreDirProperty = rootFolder.dir("jre")
+//        // 2. Access the actual File object using .asFile
+//        File jreZipFile = jreZipProperty.asFile
+//        File jreDir = jreDirProperty.asFile
+//
+//        // Create the jre-download directory if it doesn't exist
+//        if (!jreDir.exists()) {
+//            jreDir.mkdirs()
+//        }
+//
+//        // Download the JRE
+//        println "Downloading JRE from $jreUrl..."
+//        URI.create(jreUrl).toURL().withInputStream { input ->
+//            jreZipFile.withOutputStream { output ->
+//                output << input
+//            }
+//        }
+//
+//        // Extract the JRE
+//        println "Extracting JRE to $jreDir..."
+//        copy {
+//            from zipTree(jreZipProperty)
+//            into jreDirProperty
+//        }
+//
+//        // Clean up the zip file
+//        delete jreZipProperty
+//
+//        println "JRE downloaded and extracted to $jreDir"
+//    }
+//}
+//launch4j {
+//    outfile = "DatingApp-${version}.exe"
+//    jarTask = project.tasks.jar
+//    bundledJrePath = 'jre' //
+//    outputDir = buildFolder.dir("distributions/exeWithoutJre").get().asFile.path
+//
+//}
+tasks.register('zipExe', Zip) {
+    archiveFileName = "DatingApp-${version}-${versionType}.zip" // Custom name with version
     destinationDirectory = file(layout.buildDirectory.dir("distributions"))
 
-    from(launch4jOutputDir) {
+    from(jpackageOutputDir) {
         include '**/*'
     }
-    from(rootFolder.dir("jre/jdk-21.0.2+13-jre")) { // Include the bundled JRE
-        into 'jre'
-    }
+//    from(rootFolder.dir("jre/jdk-21.0.2+13-jre")) { // Include the bundled JRE
+//        into 'jre'
+//    }
 
     doLast {
         println "Created zip archive at ${archiveFile.get()}"
+    }
+}
+runtime {
+    modules = [
+            'java.base',
+            'java.desktop',
+            'java.naming',
+            'java.xml',
+            'jdk.unsupported',
+            'java.security.jgss',   // Added for security
+            'java.security.sasl',   // Added for security
+            'jdk.crypto.ec'         // CRITICAL: This provides Elliptic Curve ciphers used by almost all modern servers
+    ]
+    jpackage {
+        imageName = "DatingApp-$version-${versionType}"
+        installerName = "DatingApp-Installer"
+        installerType = "msi"
+
+        mainJar = "DatingApp-${version}.jar"
+        mainClass = "forrealdatingapp.Launcher"
+
+        // Move the console flag here - this is for the EXE itself
+        imageOptions = [
+                '--icon', 'src/main/resources/datingappicon.ico'
+//                '--win-console'
+        ]
+
+        jvmArgs = ['-cp', 'app/*']
+
+        installerOptions = [
+                '--win-dir-chooser',
+                '--win-menu',
+                '--win-shortcut',
+                '--vendor', 'Yehiam Knafo',
+                '--app-version', version,
+                '--description', 'Dating Application Project',
+                '--win-upgrade-uuid', '550e8400-e29b-41d4-a716-446655440000'
+        ]
     }
 }
 
