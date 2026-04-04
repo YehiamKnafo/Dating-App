@@ -8,11 +8,11 @@ plugins {
 
 }
 //JENKINS WAY
-//version = System.getenv("JAVA_DATING_APP_VERSION");
-//versionType = System.getenv("VERSION_TYPE")
+version = System.getenv("JAVA_DATING_APP_VERSION");
+def versionType = System.getenv("VERSION_TYPE")
 //LOCAL WAY
-version = "1.0.0"
-def versionType = "SNAPSHOT"
+//version = "1.0.0"
+//def versionType = "SNAPSHOT"
 
 repositories {
     mavenCentral()
