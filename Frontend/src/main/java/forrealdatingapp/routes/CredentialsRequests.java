@@ -24,7 +24,7 @@ public class CredentialsRequests {
 
         Request request = new Request.Builder()
                 //SECRET BACKEND NOT THE MAIN ONE
-                .url("https://datingappcredentials-latest.onrender.com/")
+                .url("https://yehiam-offical-dating-app-website.onrender.com")
                 .addHeader("X-App-Signature", "JavaFX-Client-v1")
                 .build();
 
