@@ -18,3 +18,4 @@ bin
 .gradle
 node_modules
 token-db-implementation.js
+miniBackendForCredentials/website
