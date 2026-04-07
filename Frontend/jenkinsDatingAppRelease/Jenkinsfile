@@ -73,7 +73,7 @@ pipeline {
                         // 2. Upload the asset (streams from disk, no OOM error!)
                         bat "gh release upload ${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE} build/distributions/DatingApp-${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE}.zip"
                         dir('build/jpackage') {
-                           
+                            bat "dir /b"
                             bat "gh release upload ${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE} DatingApp-Installer.msi"
                         }
                     }
