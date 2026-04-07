@@ -7,13 +7,8 @@ plugins {
 
 
 }
-//JENKINS WAY
-version = System.getenv("JAVA_DATING_APP_VERSION");
+def verisonNumber = System.getenv("JAVA_DATING_APP_VERSION")
 def versionType = System.getenv("VERSION_TYPE")
-//LOCAL WAY
-//version = "1.0.0"
-//def versionType = "SNAPSHOT"
-
 repositories {
     mavenCentral()
 }
@@ -31,7 +26,7 @@ mainClassName = 'forrealdatingapp.App'
 
 jar {
     archiveBaseName = "DatingApp"
-    archiveVersion = version as String // Or use the global 'version' property
+//    archiveVersion = version as String // Or use the global 'version' property
     manifest {
         attributes 'Main-Class': 'forrealdatingapp.Launcher'
     }
@@ -45,9 +40,9 @@ jar {
 //    }
 }
 //"${buildDir}/launch4j"
-def rootFolder = layout.projectDirectory;
+//def rootFolder = layout.projectDirectory;
 def buildFolder = layout.buildDirectory
-def jpackageOutputDir = buildFolder.dir("jpackage/DatingApp-$version-${versionType}")
+def jpackageOutputDir = buildFolder.dir("jpackage/DatingApp")
 
 //tasks.register('downloadJre') {
 //    doLast {
@@ -93,7 +88,7 @@ def jpackageOutputDir = buildFolder.dir("jpackage/DatingApp-$version-${versionTy
 //
 //}
 tasks.register('zipExe', Zip) {
-    archiveFileName = "DatingApp-${version}-${versionType}.zip" // Custom name with version
+    archiveFileName = "DatingApp-${verisonNumber}-${versionType}.zip" // Custom name with version
     destinationDirectory = file(layout.buildDirectory.dir("distributions"))
 
     from(jpackageOutputDir) {
@@ -119,11 +114,11 @@ runtime {
             'jdk.crypto.ec'         // CRITICAL: This provides Elliptic Curve ciphers used by almost all modern servers
     ]
     jpackage {
-        imageName = "DatingApp-$version-${versionType}"
+        imageName = "DatingApp-$verisonNumber"
         installerName = "DatingApp-Installer"
         installerType = "msi"
 
-        mainJar = "DatingApp-${version}.jar"
+        mainJar = "DatingApp.jar"
         mainClass = "forrealdatingapp.Launcher"
 
         // Move the console flag here - this is for the EXE itself

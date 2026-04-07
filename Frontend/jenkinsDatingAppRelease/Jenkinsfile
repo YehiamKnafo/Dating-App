@@ -36,6 +36,11 @@ pipeline {
         stage('Create Zip') {
             steps {
                 dir('Frontend'){
+                    dir('build/jpackage'){
+                        script{
+                            bat 'rename DatingApp-${env.JAVA_DATING_APP_VERSION} DatingApp' // make only the exe hold the 
+                        }
+                    }
                     script {
                             bat 'gradle zipExe' // Use 'sh' for Linux/macOS
                     
@@ -55,8 +60,7 @@ pipeline {
             withCredentials([string(credentialsId: 'GITHUB_TOKEN', variable: 'GITHUB_TOKEN')]) {
                 script {
                     dir('Frontend') {
-                        bat "echo # Release v${env.JAVA_DATING_APP_VERSION} > release-notes.md"
-                        bat "echo - Built automatically by Jenkins >> release-notes.md"
+                        bat "echo - Built automatically by Jenkins > release-notes.md"
                         bat "echo - High performance Beta build >> release-notes.md"
                         bat "echo - Better logo rendering >> release-notes.md"
                         def releaseExists = bat(script: "gh release view ${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE}", returnStatus: true) == 0
@@ -74,6 +78,7 @@ pipeline {
                         bat "gh release upload ${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE} build/distributions/DatingApp-${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE}.zip"
                         dir('build/jpackage') {
                             bat "dir /b"
+                            bat "rename DatingApp-Installer-1.0.msi DatingApp-Installer.msi"
                             bat "gh release upload ${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE} DatingApp-Installer.msi"
                         }
                     }
