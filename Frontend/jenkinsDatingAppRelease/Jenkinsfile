@@ -59,7 +59,7 @@ pipeline {
                         bat "echo - Built automatically by Jenkins >> release-notes.md"
                         bat "echo - High performance Beta build >> release-notes.md"
                         bat "echo - Better logo rendering >> release-notes.md"
-                        def releaseExists = bat(script: "gh release view v${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE}", returnStatus: true) == 0
+                        def releaseExists = bat(script: "gh release view ${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE}", returnStatus: true) == 0
                         if(releaseExists){
                             echo "Old release found. Deleting..."
                             bat "gh release delete ${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE} --yes"
