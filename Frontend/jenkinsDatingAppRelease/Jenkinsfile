@@ -74,7 +74,7 @@ pipeline {
                         bat "gh release upload ${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE} build/distributions/DatingApp-${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE}.zip"
                         dir('build/jpackage') {
                            
-                            bat "gh release upload ${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE} DatingApp-Installer-${env.JAVA_DATING_APP_VERSION}.msi"
+                            bat "gh release upload ${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE} DatingApp-Installer.msi"
                         }
                     }
                 }
