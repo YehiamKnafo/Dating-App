@@ -88,7 +88,7 @@ def jpackageOutputDir = buildFolder.dir("jpackage/DatingApp")
 //
 //}
 tasks.register('zipExe', Zip) {
-    archiveFileName = "DatingApp-${verisonNumber}-${versionType}.zip" // Custom name with version
+    archiveFileName = "DatingApp.zip" // Custom name with version
     destinationDirectory = file(layout.buildDirectory.dir("distributions"))
 
     from(jpackageOutputDir) {
@@ -114,7 +114,7 @@ runtime {
             'jdk.crypto.ec'         // CRITICAL: This provides Elliptic Curve ciphers used by almost all modern servers
     ]
     jpackage {
-        imageName = "DatingApp-$verisonNumber"
+        imageName = "DatingApp-$verisonNumber-$versionType"
         installerName = "DatingApp-Installer"
         installerType = "msi"
 
