@@ -38,6 +38,7 @@ pipeline {
                 dir('Frontend'){
                     dir('build/jpackage'){
                         script{
+                            bat "dir /b"
                             bat 'rename DatingApp-${env.JAVA_DATING_APP_VERSION} DatingApp' // make only the exe hold the 
                         }
                     }
