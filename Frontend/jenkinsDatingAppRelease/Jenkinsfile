@@ -76,7 +76,7 @@ pipeline {
                         bat "gh release create ${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE} --target main --title \"Release ${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE}\" --notes-file release-notes.md"
                         
                         // 2. Upload the asset (streams from disk, no OOM error!)
-                        dir(build/distributions){
+                        dir('build/distributions'){
                             bat "rename DatingApp.zip DatingApp-${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE}.zip"
                             bat "gh release upload ${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE} DatingApp-${env.JAVA_DATING_APP_VERSION}-${env.VERSION_TYPE}.zip"
                         }
