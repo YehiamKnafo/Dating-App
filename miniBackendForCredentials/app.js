@@ -1,9 +1,11 @@
 const express = require('express')
+const path = require('path');
 const routesHandler = require('./routes/routes');
 const connectToDB = require('./db/mongoConnect');
 const { PORT } = require('./secret/dotenvconf');
 const app = express();
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 const port = PORT;
 routesHandler(app);
 const startServer = async () => {
@@ -21,5 +23,6 @@ const startServer = async () => {
     process.exit(1); // Kill the process if DB fails
   }
 };
+
 
 startServer();

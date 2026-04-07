@@ -21,4 +21,4 @@ COPY ./app.js ./
 
 
 # Command to run the app (adjust to your entry file)
-CMD  ["npm" , "start"]
+CMD ["node", "app.js"]

@@ -1,7 +1,6 @@
 FrontOnlyEnvScript.bat
 .github
 .env
-/Backend/.env
 /Backend/contents/secret/
 backendcontentfordevops/
 build
@@ -9,13 +8,34 @@ build
 /Backend/middlewares/rateLimiter.js
 /Backend/users.json
 /Backend/readme-back.md
-.vscode
 bin
 .env
-/Frontend/.idea
 /Frontend/jenkins-file-for-release
 /Frontend/jre
 .gradle
-node_modules
 token-db-implementation.js
-miniBackendForCredentials/website
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+

@@ -1,12 +1,46 @@
+# FROM node:22.22-alpine
+# WORKDIR /app
+# COPY package.json package-lock.json ./
+# RUN npm install
+# COPY db /app/db
+# COPY secret /app/secret
+# COPY middlewares /app/middlewares
+# COPY routes /app/routes
+# COPY app.js ./
+
+
+# CMD ["npm","start"]
+# --- STAGE 1: Build the Website ---
+FROM node:22.22-alpine AS website-builder
+WORKDIR /build-website
+
+# Copy website package files first for better caching
+COPY website/package*.json ./
+RUN npm install
+
+# Copy website source and build it
+COPY website/ ./
+RUN npm run build 
+
+# --- STAGE 2: The Production Runner ---
 FROM node:22.22-alpine
 WORKDIR /app
+
+# Install only production dependencies for the backend
 COPY package.json package-lock.json ./
-RUN npm install
-COPY db /app/db
-COPY secret /app/secret
-COPY middlewares /app/middlewares
-COPY routes /app/routes
+RUN npm install --production
+
+# Copy your backend folders exactly as they are in your repo
+COPY db ./db
+COPY secret ./secret
+COPY middlewares ./middlewares
+COPY routes ./routes
 COPY app.js ./
 
+# Copy the static assets from the builder stage into a 'public' folder
+COPY --from=website-builder /build-website/dist ./public
 
-CMD ["npm","start"]
+
+EXPOSE 10000
+
+CMD ["node", "app.js"]

@@ -5,7 +5,7 @@ module.exports = function(app){
   app.get('/health', (req, res) => {
   res.status(200).send('Server is up and running');
 });
-app.get('/', auth , async(_req, res) => {
+app.get('/api/config', auth , async(_req, res) => {
   try {
       const credentials ={
         expressUrl: EXPRESS,
