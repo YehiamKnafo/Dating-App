@@ -102,6 +102,7 @@ public class App extends Application{
     }
     @Override
     public void stop() {
+        executor.shutdownNow();
         clear();
         System.exit(0);
 
@@ -127,6 +128,8 @@ public class App extends Application{
             System.out.println("No token was found");
 
         }
+        App.id = null;
+    }
 //        TokenManager tokenManager = new TokenManager();
 //        if (tokenManager.getToken(id) != null){
 //            tokenManager.clearToken(id);  // Clear the token when the app stops
@@ -136,9 +139,6 @@ public class App extends Application{
 //            System.out.println("No token was found");
 //        }
 
-        App.id = null;
-        executor.shutdownNow();
-    }
 
     public static <T extends Pane> void BackToLoginBtn(T div, Stage stage){
         Button backButton = new Button("back to login/sign up screen");
