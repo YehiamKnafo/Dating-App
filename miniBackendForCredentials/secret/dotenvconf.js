@@ -4,5 +4,6 @@ module.exports ={
     MONGO_URL:process.env.MONGO_URL,
     EXPRESS: process.env.EXPRESS ,
     CLOUDINARY_URL: process.env.CLOUDINARY_URL,
-    PORT: Number(process.env.PORT) || 3000
+    PORT: Number(process.env.PORT) || 3000,
+    APP_VERSION: process.env.APP_VERSION
 }

@@ -19,6 +19,8 @@ import forrealdatingapp.dtos.LoginClass;
 import forrealdatingapp.otps.SendOTPReset;
 import forrealdatingapp.otps.SendOTPScreen;
 import forrealdatingapp.routes.AuthRequests;
+import forrealdatingapp.routes.CredentialsRequests;
+import forrealdatingapp.utilities.Config;
 import forrealdatingapp.utilities.RouterUtils;
 import io.socket.client.Ack;
 import javafx.application.Platform;
@@ -29,6 +31,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -50,9 +53,49 @@ public class LoginWindow {
         progressIndicator.setStyle("-fx-progress-color: black;");
         progressIndicator.setVisible(false);
         serverStatusIndicator.setText(null);
+        //MENU
+        // 1. Create the MenuBar
+        MenuBar menuBar = new MenuBar();
+
+        // 2. Create the individual Menus
+        Menu checkForUpdate = new Menu("Check For Updates");  // File
+
+
+        // 3. Add items to the menus (optional actions)
+        MenuItem newUpdate = new MenuItem("Check For New Update");
+        checkForUpdate.getItems().add(newUpdate);
+        // Checking for update...
+        newUpdate.setOnAction(e->{
+            Task<JSONObject> appUpdates = new Task<JSONObject>() {
+                @Override
+                protected JSONObject call() throws Exception {
+                    return CredentialsRequests.CheckForUpdate(Config.get("app.version"));
+                }
+            };
+            appUpdates.setOnScheduled((event) -> progressIndicator.setVisible(true));
+            appUpdates.setOnSucceeded(event -> {
+                try {
+                    boolean flag = appUpdates.get().getBoolean("updateAvailable");
+                    System.out.println(flag);
+                } catch (Exception e1) {
+                    throw new RuntimeException(e1);
+                }
+
+            });
+            System.out.println("dwdwd");
+        });
+        // END Checking for update
+
+        // 4. Add menus to the bar
+        menuBar.getMenus().add(checkForUpdate);
+
+        //END MENU
+        BorderPane root = new BorderPane();
+        root.setTop(menuBar);
 
         //END ProgressIndicator
-        StackPane root = new StackPane();
+        StackPane stackPane = new StackPane();
+        root.setCenter(stackPane);
         Scene scene = new Scene(root, 600, 800);
 
         // Set background color
@@ -64,10 +107,18 @@ public class LoginWindow {
         formLayout.setStyle("-fx-background-color: white; -fx-padding: 30; -fx-background-radius: 10;");
         
         // Logo
-        Image logoSrc= new Image(Objects.requireNonNull(getClass().getResourceAsStream("/datingapplogo.png")));
+        Image logoSrc = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/datingapplogo.png")));
         ImageView logo = new ImageView(logoSrc);
         logo.setFitHeight(250);
         logo.setFitWidth(250);
+        // 1. Get version from the properties file
+        String version = Config.get("app.version");
+
+        // 2. Create the label
+        Label lblVersion = new Label("v" + version);
+
+        // 3. Style it (White and Clean)
+        lblVersion.setStyle("-fx-text-fill: black; -fx-font-weight: bold; -fx-font-family: 'Arial';");
 
         // Username and Password Fields
         Label usernameLabel = new Label("user name:");
@@ -102,10 +153,10 @@ public class LoginWindow {
         // googleButton.setContentDisplay(ContentDisplay.LEFT);
         
         // Add components to formLayout
-        formLayout.getChildren().addAll(logo, usernameLabel, usernameField, passwordLabel, passwordField,serverStatusIndicator, loginButton, signupButton,forgotPassButton);
+        formLayout.getChildren().addAll(logo,lblVersion, usernameLabel, usernameField, passwordLabel, passwordField,serverStatusIndicator, loginButton, signupButton,forgotPassButton);
         
         // Add formLayout to the root pane
-        root.getChildren().addAll(formLayout, progressIndicator);
+        stackPane.getChildren().addAll(formLayout, progressIndicator);
         StackPane.setAlignment(progressIndicator, Pos.CENTER);
 
         // Set up button actions (You can replace this with actual login/signup logic)
@@ -158,6 +209,25 @@ public class LoginWindow {
 
 
     }
+
+//    private boolean HandleCheckForUpdate() {
+//        Task<JSONObject> appUpdates = new Task<JSONObject>() {
+//            @Override
+//            protected JSONObject call() throws Exception {
+//                return CredentialsRequests.CheckForUpdate(Config.get("app.version"));
+//            }
+//        };
+//        appUpdates.setOnScheduled((event) -> progressIndicator.setVisible(true));
+//        appUpdates.setOnSucceeded(event -> {
+//            try {
+//
+//                boolean flag = appUpdates.get().getBoolean("updateAvailable");
+//            } catch (Exception e) {
+//                throw new RuntimeException(e);
+//            }
+//
+//        });
+//    }
 
     private void login(String usrname, String p, Label error, Stage stage) {
         if(WebSocket.websocketio.INSTANCE.socketIoInstance != null)

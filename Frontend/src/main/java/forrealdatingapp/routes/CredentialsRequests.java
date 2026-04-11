@@ -3,11 +3,15 @@ package forrealdatingapp.routes;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import forrealdatingapp.credentials.Credentials;
+import forrealdatingapp.utilities.Config;
 import forrealdatingapp.utilities.RouterUtils;
 import forrealdatingapp.utilities.TimeoutInterceptor;
 import okhttp3.*;
+import org.json.JSONObject;
 
+import java.beans.Encoder;
 import java.io.IOException;
+import java.nio.charset.CharsetEncoder;
 import java.util.concurrent.TimeUnit;
 
 
@@ -23,8 +27,8 @@ public class CredentialsRequests {
                 .build();
 
         Request request = new Request.Builder()
-                //SECRET BACKEND NOT THE MAIN ONE
-                .url("https://yehiam-offical-dating-app-website.onrender.com/api/config")
+                //PUBLIC BACKEND NOT THE MAIN ONE
+                .url(Config.get("api.base_url") +"api/config")
                 .addHeader("X-App-Signature", "JavaFX-Client-v1")
                 .build();
 
@@ -56,4 +60,25 @@ public class CredentialsRequests {
         }
 
 
-    }}
+    }
+
+    public static JSONObject CheckForUpdate(String version) {
+        String baseUrl = Config.get("app.version");
+        String finalUrl = baseUrl + "?v=" +
+                version;
+// Result: https://your-dating-app.onrender.com/checkForUpdates?v=1.0.0
+
+        try {
+
+        Request request = new Request.Builder()
+                .url(finalUrl)
+                .build();
+        try (Response response = BASE_CLIENT.newCall(request).execute()) {
+            return new JSONObject(response.body().string());
+
+        }
+        } catch (Exception e) {
+
+        }
+    }
+}
