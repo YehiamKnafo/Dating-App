@@ -20,7 +20,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm // Checkout code from the configured SCM (e.g., Git)
-             
+            
             }
             
         }
@@ -42,24 +42,22 @@ pipeline {
         stage('Push to Docker Hub') {
             steps {
                 dir('miniBackendForCredentials'){
-                powershell """
-                    Write-Host "Pushing image to Docker Hub..."
-                    docker push yehiamfinseshyt/yehiam-dating-app-offical-site:${env.JAVA_DATING_APP_VERSION}
-                    docker push "yehiamfinseshyt/yehiam-dating-app-offical-site:latest"
-                """
-                
+                    powershell """
+                        Write-Host "Pushing image to Docker Hub..."
+                        docker push yehiamfinseshyt/yehiam-dating-app-offical-site:${env.JAVA_DATING_APP_VERSION}
+                        docker push "yehiamfinseshyt/yehiam-dating-app-offical-site:latest"
+                    """ 
+                }
             }
         }
-    }
-//     stage('Deploy to Render') {
-//     steps {
-//         powershell """
-//             Write-Host "Pinging Render to pull the latest image..."
-//             # Use the URL you copied from the Render dashboard below
-//             Invoke-RestMethod -Uri "${env.RENDER_DEPLOY_HOOK}" -Method Post
-//         """
-//     }
-// }
+        stage('Deploy to Render') {
+            steps {
+                powershell """
+                    Write-Host "Pinging Render to pull the latest image..."
+                    Invoke-RestMethod -Uri "${env.RENDER_DEPLOY_HOOK}" -Method Post
+                """
+            }
+        }
         stage('Prepare Version') {
             steps {
                 dir('Frontend/src/main/resources'){

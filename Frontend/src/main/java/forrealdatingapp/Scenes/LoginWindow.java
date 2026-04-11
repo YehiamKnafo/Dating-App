@@ -4,6 +4,8 @@ import static forrealdatingapp.App.serverStatusIndicator;
 import static forrealdatingapp.utilities.RouterUtils.createTokenManger;
 import static forrealdatingapp.utilities.RouterUtils.manageToken;
 
+import java.awt.*;
+import java.net.URI;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -13,6 +15,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import com.sun.marlin.DPathConsumer2D;
 import forrealdatingapp.App;
 import forrealdatingapp.WebSocket;
 import forrealdatingapp.dtos.LoginClass;
@@ -28,6 +31,13 @@ import javafx.concurrent.Task;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.TextField;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
@@ -35,6 +45,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -53,42 +64,32 @@ public class LoginWindow {
         progressIndicator.setStyle("-fx-progress-color: black;");
         progressIndicator.setVisible(false);
         serverStatusIndicator.setText(null);
+        // Create dot
+        Circle updateDot = new Circle(5); // Radius of 5
+        updateDot.setFill(Color.DODGERBLUE); // A nice "Modern Blue"
+        updateDot.setStroke(Color.WHITE);    // White border
+        updateDot.setStrokeWidth(1.5);       // Thickness of the border
+
+
+        DropShadow glow = new DropShadow();
+        glow.setColor(Color.DODGERBLUE);
+        glow.setRadius(5);
+        updateDot.setEffect(glow);
+        //END DOT
         //MENU
-        // 1. Create the MenuBar
         MenuBar menuBar = new MenuBar();
-
-        // 2. Create the individual Menus
         Menu checkForUpdate = new Menu("Check For Updates");  // File
-
-
-        // 3. Add items to the menus (optional actions)
         MenuItem newUpdate = new MenuItem("Check For New Update");
         checkForUpdate.getItems().add(newUpdate);
-        // Checking for update...
-        newUpdate.setOnAction(e->{
-            Task<JSONObject> appUpdates = new Task<JSONObject>() {
-                @Override
-                protected JSONObject call() throws Exception {
-                    return CredentialsRequests.CheckForUpdate(Config.get("app.version"));
-                }
-            };
-            appUpdates.setOnScheduled((event) -> progressIndicator.setVisible(true));
-            appUpdates.setOnSucceeded(event -> {
-                try {
-                    boolean flag = appUpdates.get().getBoolean("updateAvailable");
-                    System.out.println(flag);
-                } catch (Exception e1) {
-                    throw new RuntimeException(e1);
-                }
-
-            });
-            System.out.println("dwdwd");
+        HandleCheckForUpdate(newUpdate, updateDot, checkForUpdate,"void");
+        newUpdate.setOnAction(actionEvent -> {
+            HandleCheckForUpdate(newUpdate, updateDot, checkForUpdate, "on-click");
         });
-        // END Checking for update
+        // Checking for update...
 
+        // END Checking for update
         // 4. Add menus to the bar
         menuBar.getMenus().add(checkForUpdate);
-
         //END MENU
         BorderPane root = new BorderPane();
         root.setTop(menuBar);
@@ -210,25 +211,66 @@ public class LoginWindow {
 
     }
 
-//    private boolean HandleCheckForUpdate() {
-//        Task<JSONObject> appUpdates = new Task<JSONObject>() {
-//            @Override
-//            protected JSONObject call() throws Exception {
-//                return CredentialsRequests.CheckForUpdate(Config.get("app.version"));
-//            }
-//        };
-//        appUpdates.setOnScheduled((event) -> progressIndicator.setVisible(true));
-//        appUpdates.setOnSucceeded(event -> {
-//            try {
-//
-//                boolean flag = appUpdates.get().getBoolean("updateAvailable");
-//            } catch (Exception e) {
-//                throw new RuntimeException(e);
-//            }
-//
-//        });
-//    }
+    private void HandleCheckForUpdate(MenuItem newUpdate, Circle updateDot, Menu menu,String type) {
+        Task<JSONObject> appUpdates = new Task<JSONObject>() {
+            @Override
+            protected JSONObject call() throws Exception {
+                return CredentialsRequests.CheckForUpdate(Config.get("app.version"));
+            }
+        };
 
+        appUpdates.setOnSucceeded(event -> {
+            try {
+                JSONObject response = appUpdates.get();
+                boolean hasUpdate = response.getBoolean("updateAvailable");
+
+                if (hasUpdate) {
+                    // UI Updates
+                    menu.setGraphic(updateDot);
+                    menu.setText(response.getString("msg"));
+                    menu.setStyle("-fx-font-weight: bold; -fx-text-fill: #2980b9;");
+                    menu.getItems().remove(newUpdate);
+                    // Create Download item if it doesn't exist yet
+                    if (menu.getItems().stream().noneMatch(item -> item.getText().equals("Download"))) {
+                        MenuItem download = new MenuItem("Download New Version");
+
+                        download.setOnAction(e -> {
+                            openWebpage(Config.get("api.base_url"));
+                            // Reset the menu state so they can check again later
+                            resetMenu(menu, newUpdate);
+                            menu.getItems().remove(download);
+                        });
+
+                        menu.getItems().add(download);
+                    }
+                } else if (type.equals("on-click")) {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION, response.getString("msg"));
+                    alert.show();
+                }
+
+            } catch (Exception e1) {
+                e1.printStackTrace();
+            }
+        });
+
+        App.executor.submit(appUpdates);
+    }
+
+    // Helper to keep code clean
+    private void resetMenu(Menu menu, MenuItem checkItem) {
+        menu.setText("Check For Updates");
+        menu.setStyle(null);
+        menu.setGraphic(null);
+        menu.getItems().add(checkItem);
+    }
+
+    private void openWebpage(String url) {
+        try {
+            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                Desktop.getDesktop().browse(new URI(url));
+            }
+        } catch (Exception ex) { ex.printStackTrace(); }
+    }
     private void login(String usrname, String p, Label error, Stage stage) {
         if(WebSocket.websocketio.INSTANCE.socketIoInstance != null)
             if (!WebSocket.websocketio.INSTANCE.socketIoInstance.connected()) {

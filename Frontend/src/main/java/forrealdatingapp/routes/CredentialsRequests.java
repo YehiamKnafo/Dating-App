@@ -28,7 +28,7 @@ public class CredentialsRequests {
 
         Request request = new Request.Builder()
                 //PUBLIC BACKEND NOT THE MAIN ONE
-                .url(Config.get("api.base_url") +"api/config")
+                .url(Config.get("api.base_url") +"/api/config")
                 .addHeader("X-App-Signature", "JavaFX-Client-v1")
                 .build();
 
@@ -63,9 +63,10 @@ public class CredentialsRequests {
     }
 
     public static JSONObject CheckForUpdate(String version) {
-        String baseUrl = Config.get("app.version");
-        String finalUrl = baseUrl + "?v=" +
+        String baseUrl = Config.get("api.base_url");
+        String finalUrl = baseUrl + "/api/checkForUpdates?v=" +
                 version;
+        System.out.println(finalUrl);
 // Result: https://your-dating-app.onrender.com/checkForUpdates?v=1.0.0
 
         try {
@@ -74,6 +75,7 @@ public class CredentialsRequests {
                 .url(finalUrl)
                 .build();
         try (Response response = BASE_CLIENT.newCall(request).execute()) {
+//            System.out.println(response.body().string());
             return new JSONObject(response.body().string());
 
         }

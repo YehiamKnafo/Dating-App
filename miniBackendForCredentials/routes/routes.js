@@ -34,7 +34,8 @@ if (currentClientVersion === latestVersion) {
   // New version found
   return res.status(200).json({
     updateAvailable: true,
-    msg: `A new version ${latestVersion} is available for download!`,  });
+    msg: "Update to " + latestVersion + " Ready"
+  });
   
   
 

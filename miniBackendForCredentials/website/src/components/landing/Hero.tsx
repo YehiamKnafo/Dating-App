@@ -31,7 +31,7 @@ const Hero = () => {
           
 
           {/* CTA Buttons */}
-          <h1>version ${import.meta.env.VITE_APP_VERSION} - ${import.meta.env.VITE_VERSION_TYPE}</h1>
+          <h1>version {import.meta.env.VITE_APP_VERSION} - {import.meta.env.VITE_VERSION_TYPE}</h1>
           <div className="flex justify-center mb-60">
             
             <Button onClick={HandleDownload} variant="hero" size="xl">

@@ -2,6 +2,8 @@ package forrealdatingapp;
 
 import java.io.IOException;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -42,10 +44,12 @@ public class App extends Application{
     public static String id;
     public static ProgressIndicator progressIndicator;
     public static Label serverStatusIndicator;
+    public static ExecutorService executor;
 
     @Override
     public void start(Stage primaryStage)  throws IOException {
         //TEST
+        executor = Executors.newSingleThreadExecutor();
         loginWindow = new LoginWindow();
         matchesPage = new MatchesPage();
         isTokenOnline = false;
@@ -133,6 +137,7 @@ public class App extends Application{
 //        }
 
         App.id = null;
+        executor.shutdownNow();
     }
 
     public static <T extends Pane> void BackToLoginBtn(T div, Stage stage){
