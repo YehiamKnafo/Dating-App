@@ -19,6 +19,7 @@ gender: String,
 preferredGender:String,
 bio: String,
 password:String,
+matchNotiAmount: Number,
 token:String
 })
 
@@ -52,7 +53,8 @@ exports.validateSignup = (_reqBody) => {
         password: Joi.string().required().max(200),
         profilePicture: Joi.string().max(200),
         minPreferredAge: Joi.number().min(18).max(99),
-        maxPreferredAge: Joi.number().min(18).max(99)
+        maxPreferredAge: Joi.number().min(18).max(99),
+        matchNotiAmount: Joi.number()
     });
     return joiSchema.validate(_reqBody);
 };

@@ -24,6 +24,7 @@ public class User {
     private String preferredGender;
     private String bio;
     private String password;
+    private int matchNotiAmount;
     public int getMinPreferredAge() {
         return minPreferredAge;
     }
@@ -147,6 +148,11 @@ public class User {
     }
 
 
-    
-    
+    public int getMatchNotiAmount() {
+        return matchNotiAmount;
+    }
+
+    public void setMatchNotiAmount(int matchNotiAmount) {
+        this.matchNotiAmount = matchNotiAmount;
+    }
 }

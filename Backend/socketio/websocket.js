@@ -1,6 +1,9 @@
 const { MatchModel } = require('../models/MatchModel.js');
 const { UserModel } = require('../models/usersModel.js');
 const { Message } = require('../models/MessageModel.js');
+/**
+ * @param {import('socket.io').Server} io
+ */
 module.exports = function(io){
 // server-side
 io.on("connection",(socket) => {
@@ -137,6 +140,41 @@ socket.on("stop_typing", (data) => {
                 );
 
 
+  });
+  socket.on("handleMatchNotiAmountDb",async(matchid, type) => {
+    let user;
+    if (type === "increment") {
+        user = await UserModel.findByIdAndUpdate(
+        matchid,
+        { $inc: { matchNotiAmount: 1 } }, // Increment by 1
+        { new: true } // Optional: returns the document AFTER the update
+        );
+        const socketUser = await UserModel.findByIdAndUpdate(
+        socket.userId,
+        { $inc: { matchNotiAmount: 1 } }, // Increment by 1
+        { new: true } // Optional: returns the document AFTER the update
+        );
+        socket.to(`user:${matchid}`).emit("UiMatchNotiAmount", {
+            matchNotiAmount: user.matchNotiAmount
+        });
+        socket.emit("UiMatchNotiAmount", {
+            matchNotiAmount: socketUser.matchNotiAmount
+        });
+    }
+    if (type === "reset") {
+        user = await UserModel.findByIdAndUpdate(
+        socket.userId,
+        {matchNotiAmount: 0 }, // Increment by 1
+        { new: true } // Optional: returns the document AFTER the update
+        );
+         socket.emit("UiMatchNotiAmount", {
+            matchNotiAmount: user.matchNotiAmount
+        });
+    }
+
+  
+
+    
   });
   socket.on("disconnect", async(reason) => {
     console.log(`User ${socket.userId} (Socket ${socket.id}) is gone. Reason: ${reason}`);

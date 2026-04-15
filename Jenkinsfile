@@ -4,11 +4,11 @@ pipeline {
     }
     environment {
         // Define environment variables (can be loaded from Jenkins credentials)
-        JAVA_DATING_APP_VERSION = "1.1.0"
+        JAVA_DATING_APP_VERSION = "1.1.1"
         VERSION_TYPE = "BETA"
         GITHUB_TOKEN = credentials("GITHUB_TOKEN")
         RENDER_DEPLOY_HOOK = credentials("RENDER_DEPLOY_HOOK")
-        WHATS_NEW = "Added check for updates and better app versioning"
+        WHATS_NEW = "Added to be notified when you get matched"
     }
 
 

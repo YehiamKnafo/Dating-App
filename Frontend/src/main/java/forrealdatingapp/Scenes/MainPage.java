@@ -17,11 +17,13 @@ import forrealdatingapp.routes.MatchingRequests;
 import forrealdatingapp.routes.UserProfileRequests;
 import forrealdatingapp.utilities.ImageUtils;
 import io.socket.client.Ack;
+import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -31,6 +33,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import org.json.JSONException;
@@ -46,6 +49,9 @@ private static int page;
 private static boolean UsersDetectad;
 private static User next;
 private static Queue<User> users;
+private static Button matchesButton;
+private static  Text matchesNotificationText;
+private static  StackPane matchesNotificationStack;
     public void showMainPage(Stage stage) {
         // IN CASE THAT WAS HELPING
         //        if (args != null && args.length > 0){
@@ -58,6 +64,7 @@ private static Queue<User> users;
         user = UserProfileRequests.getMyProfile(App.id);
 
         socketUsernameAck();
+        listenToMatchNotis();
         WebSocket.websocketio.INSTANCE.socketIoInstance.emit("RequestMatchStatus", App.id);
         if (ChatZone.chatArea == null){
                 ChatZone.chatArea = new TextArea();
@@ -65,7 +72,15 @@ private static Queue<User> users;
                 ChatZone.chatArea.setWrapText(true);
         }
 
-
+        // Create the number
+        Circle matchesNotification = new Circle(20); // Radius of 20
+        matchesNotification.setFill(Color.LIGHTBLUE);
+        matchesNotification.setStroke(Color.BLACK);
+        String matchNotiAmount = Integer.toString(user.getMatchNotiAmount());
+        System.out.println(matchNotiAmount);
+        matchesNotificationText = new Text(matchNotiAmount);
+        matchesNotificationStack = new StackPane();
+        matchesNotificationStack.getChildren().addAll(matchesNotification, matchesNotificationText);
         String imgurl = "";
         
         // Label for text
@@ -146,8 +161,10 @@ private static Queue<User> users;
         HBox likeDislikeDiv = new HBox(20);
         Button dislikeButton = new Button("Dislike");
         Button likeButton = new Button("Like");
+
         styleLikeButton(likeButton);
         styleDislikeButton(dislikeButton);
+
       
             
         dislikeButton.setOnAction(e -> {
@@ -189,7 +206,8 @@ private static Queue<User> users;
                 //    MatchingRequests.like(om.writeValueAsString(likeMap), _id);
                    Map<String, Boolean> res =  MatchingRequests.CheckMatch(om.writeValueAsString(likeMap), App.id);
                    if(res.get("match")){
-                       //TODO: match effect                
+                       //TODO: match effect
+                        handleMatchNotiAmountDb(next.get_id(), "increment");
                         Alert alert = new Alert(AlertType.CONFIRMATION);
                         alert.setTitle("Matched!!!");
                         alert.setHeaderText("");
@@ -224,13 +242,25 @@ private static Queue<User> users;
         // Navigation buttons (Profile, Matches, Messages)
         HBox navBar = new HBox(30);
         Button profileButton = new Button(user.getUsername()+"\'s Profile");
-        Button matchesButton = new Button("Matches");
+        matchesButton = new Button("Matches");
         Button preferrences = new Button("preferrences & settings");
-        
+
+
+
+        matchesNotificationText.setStyle("-fx-font-size: 10px;");
+
+// Wrap them in a StackPane
+
         styleOtherButtons(profileButton);
         styleOtherButtons(matchesButton);
         styleOtherButtons(preferrences);
-       
+        if (user.getMatchNotiAmount() != 0)
+            matchesButton.setGraphic(matchesNotificationStack);
+        matchesButton.setContentDisplay(ContentDisplay.TOP);
+
+//        matchesNotificationText.setText("2");
+//        matchesButton.setGraphic(matchesNotificationStack);
+
         profileButton.setOnAction(e -> {
             ProfilePage profilePage = new ProfilePage();
             try {
@@ -243,6 +273,7 @@ private static Queue<User> users;
         });
         matchesButton.setOnAction((actionEvent) -> {
             try {
+                handleMatchNotiAmountDb("", "reset");
                 App.matchesPage.showMatchesPage(stage);
             } catch (IOException e1) {
                 // TODO Auto-generated catch block
@@ -299,6 +330,33 @@ private static Queue<User> users;
 
     }
 
+    private void listenToMatchNotis() {
+
+        WebSocket.websocketio.INSTANCE.socketIoInstance.off("UiMatchNotiAmount");
+        WebSocket.websocketio.INSTANCE.socketIoInstance.on("UiMatchNotiAmount", args ->{
+            JSONObject data = (JSONObject) args[0];
+            try {
+                int matchamount = data.getInt("matchNotiAmount");
+                System.out.println(matchamount);
+                if (matchesButton != null){
+                    Platform.runLater(()->{
+                        matchesNotificationText.setText(Integer.toString(matchamount));
+                        matchesButton.setGraphic(matchesNotificationStack);
+
+                    });
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+        });
+    }
+
+    private void handleMatchNotiAmountDb(String matchid, String type) {
+        WebSocket.websocketio.INSTANCE.socketIoInstance.emit("handleMatchNotiAmountDb",matchid, type);
+
+    }
+
     private void socketUsernameAck() {
         if (user != null)
             WebSocket.websocketio.INSTANCE.socketIoInstance.emit("usernameAck",user.getUsername(), (Ack) args->{
@@ -306,7 +364,7 @@ private static Queue<User> users;
                 try {
                     System.out.println(data.getString("status"));
                 } catch (JSONException e) {
-                    throw new RuntimeException(e);
+                    e.printStackTrace();
                 }
             });
     }
