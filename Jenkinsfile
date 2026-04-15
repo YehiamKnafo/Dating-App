@@ -52,10 +52,10 @@ pipeline {
         }
         stage('Deploy to Render') {
             steps {
-                powershell """
-                    Write-Host "Pinging Render to pull the latest image..."
-                    Invoke-RestMethod -Uri $env:RENDER_DEPLOY_HOOK -Method Post
-                """
+              powershell """
+                Write-Host "Pinging Render to pull the latest image..."
+                Invoke-RestMethod -Uri "${env.RENDER_DEPLOY_HOOK}" -Method Post
+            """
             }
         }
         stage('Prepare Version') {
