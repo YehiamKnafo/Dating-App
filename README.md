@@ -1,3 +1,6 @@
+# For presentation only!
+*Mongo Atlas free tier has stopped this app after 60 days of inactivity*
+*All services on this app are free tier and might cause the same affect as atlas-- contact me if you want me to present it for you*
 # Dating App 
 A Java-based frontend application for a real-time dating platform with MongoDB backend and socketio integration.
 

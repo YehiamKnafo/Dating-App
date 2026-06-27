@@ -365,7 +365,7 @@ public class ChatZone {
                 System.out.println("grey label check");
                 System.out.println(!inChatZoneScreen);
                 // Handle the "Matches Page" (The list view outside the chat)
-                if (!inChatZoneScreen && MatchesPage.lastMessageMap.containsKey(finalSenderID)) {
+                if (!inChatZoneScreen  && MatchesPage.lastMessageMap.containsKey(finalSenderID)) {
                     MatchesPage.lastMessageMap.get(finalSenderID).setText(finalSenderName + " is typing...");
                 }
             });
